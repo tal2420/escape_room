@@ -43,9 +43,13 @@ services:
         fi;
 
         cd /app;
-        if [ ! -d /app/node_modules/better-sqlite3 ]; then
-          echo '📦 Installing Node dependencies...';
+        PKG_HASH=$(sha1sum package.json | cut -d' ' -f1);
+        STORED_HASH=$(cat /app/node_modules/.pkg-hash 2>/dev/null || echo 'none');
+        if [ \"$PKG_HASH\" != \"$STORED_HASH\" ] || [ ! -d /app/node_modules/better-sqlite3 ]; then
+          echo '📦 Installing Node dependencies (package.json changed)...';
           npm install --production --no-audit --no-fund;
+          mkdir -p /app/node_modules;
+          echo \"$PKG_HASH\" > /app/node_modules/.pkg-hash;
         fi;
 
         echo '🎮 Starting Escape Room server...';
