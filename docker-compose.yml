@@ -10,51 +10,86 @@ services:
     container_name: escape-room
     working_dir: /app
     ports:
-      - "8080:3000"   # גישה דרך http://192.168.1.200:8080
+      - "8080:3000"
     volumes:
-      - escape-room-app:/app     # הרפו נשמר ב-volume
-      - escape-room-data:/data   # SQLite שורד restart
+      - escape-room-app:/app
+      - escape-room-data:/data
     environment:
       - PORT=3000
       - DB_PATH=/data/scores.db
       - NODE_ENV=production
-    command: >
-      bash -c "
-        set -e;
-        echo '🔧 Setting up environment...';
+      - REPO_URL=https://github.com/tal2420/escape_room.git
+      - FORCE_UPDATE=1
+    command:
+      - bash
+      - -c
+      - |
+        set +e
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🎮 Escape Room boot @ $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+        # ── התקנת חבילות מערכת (פעם אחת) ──
         if [ ! -f /app/.deps-installed ]; then
-          echo '📥 Installing system packages (one-time)...';
-          apt-get update -qq;
-          apt-get install -y -qq --no-install-recommends git ca-certificates python3 make g++;
-          rm -rf /var/lib/apt/lists/*;
-          touch /app/.deps-installed;
-        fi;
-
-        if [ ! -d /app/.git ]; then
-          echo '📥 Cloning repository...';
-          rm -rf /tmp/repo;
-          git clone https://github.com/tal2420/escape_room.git /tmp/repo;
-          cp -r /tmp/repo/. /app/;
-          rm -rf /tmp/repo;
+          echo "📥 Installing system packages (first run)..."
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends git ca-certificates python3 make g++
+          rm -rf /var/lib/apt/lists/*
+          touch /app/.deps-installed
+          echo "✅ System packages installed"
         else
-          echo '🔄 Pulling latest from GitHub...';
-          cd /app && git fetch --quiet origin && git reset --hard origin/main || echo '(pull skipped)';
-        fi;
+          echo "✅ System packages cached"
+        fi
 
-        cd /app;
-        PKG_HASH=$(sha1sum package.json | cut -d' ' -f1);
-        STORED_HASH=$(cat /app/node_modules/.pkg-hash 2>/dev/null || echo 'none');
-        if [ \"$PKG_HASH\" != \"$STORED_HASH\" ] || [ ! -d /app/node_modules/better-sqlite3 ]; then
-          echo '📦 Installing Node dependencies (package.json changed)...';
-          npm install --production --no-audit --no-fund;
-          mkdir -p /app/node_modules;
-          echo \"$PKG_HASH\" > /app/node_modules/.pkg-hash;
-        fi;
+        # ── שכפול או עדכון מהרפו ──
+        if [ ! -d /app/.git ]; then
+          echo "📥 First-time repository clone..."
+          rm -rf /tmp/repo
+          git clone "$REPO_URL" /tmp/repo
+          cp -r /tmp/repo/. /app/
+          rm -rf /tmp/repo
+          echo "✅ Cloned from $REPO_URL"
+        else
+          echo "🔄 Forcing update from origin/main..."
+          cd /app
+          git remote set-url origin "$REPO_URL"
+          git fetch origin main
+          FETCH_STATUS=$?
+          if [ $FETCH_STATUS -ne 0 ]; then
+            echo "⚠️  git fetch FAILED (exit $FETCH_STATUS). Re-cloning..."
+            cd /
+            rm -rf /app/.git /app/escape-room.html /app/server.js /app/package.json /app/docker-compose.yml /app/fred.jpg /app/README.md /app/DEPLOY.md /app/Dockerfile /app/.gitignore 2>/dev/null
+            rm -rf /tmp/repo
+            git clone "$REPO_URL" /tmp/repo
+            cp -r /tmp/repo/. /app/
+            rm -rf /tmp/repo
+          else
+            git reset --hard origin/main
+            git clean -fd
+          fi
+          echo "📍 Now at commit: $(cd /app && git rev-parse --short HEAD 2>/dev/null)"
+        fi
 
-        echo '🎮 Starting Escape Room server...';
+        cd /app
+        set -e
+
+        # ── בדיקת package.json ו-npm install ──
+        PKG_HASH=$(sha1sum package.json | cut -d' ' -f1)
+        STORED_HASH=$(cat /app/node_modules/.pkg-hash 2>/dev/null || echo "none")
+        if [ "$PKG_HASH" != "$STORED_HASH" ] || [ ! -d /app/node_modules/better-sqlite3 ]; then
+          echo "📦 Installing Node dependencies..."
+          npm install --production --no-audit --no-fund
+          mkdir -p /app/node_modules
+          echo "$PKG_HASH" > /app/node_modules/.pkg-hash
+          echo "✅ Node dependencies installed"
+        else
+          echo "✅ Node dependencies cached"
+        fi
+
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🎮 Starting Escape Room server..."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         exec node server.js
-      "
     restart: unless-stopped
     labels:
       - "com.game.name=EscapeRoom"
