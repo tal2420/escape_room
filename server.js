@@ -28,7 +28,7 @@ db.exec(`
 const app = express();
 app.use(express.json({ limit: '16kb' }));
 
-// Rate limit בסיסי — עד 60 בקשות לדקה לכל IP
+// Rate limit — עד 60 בקשות לדקה לכל IP
 const rateMap = new Map();
 app.use((req, res, next) => {
   const ip = req.ip || req.socket.remoteAddress || 'unknown';
@@ -73,13 +73,15 @@ app.post('/api/scores', (req, res) => {
   }
 });
 
-// === קבצים סטטיים (המשחק) ===
-app.use(express.static(path.join(__dirname, 'public'), {
-  maxAge: '5m',
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache');
-  }
-}));
+// === קבצים סטטיים ===
+app.get('/', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  res.sendFile(path.join(__dirname, 'escape-room.html'));
+});
+app.get('/fred.jpg', (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.sendFile(path.join(__dirname, 'fred.jpg'));
+});
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🎮 Escape Room running on http://0.0.0.0:${PORT}`);

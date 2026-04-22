@@ -1,20 +1,41 @@
 version: '3.8'
 
+# ארכיטקטורה ללא build — משתמש ב-image מוכן של Node.js.
+# מתקין dependencies בריצה הראשונה (cached ב-volume) וממשיך משם.
+# הימנעות מ-build פותרת את בעיית BuildKit בכמה גרסאות Portainer/Docker.
+
 services:
   escape-room:
-    build: .
-    image: escape-room:latest
+    image: node:20-slim
     container_name: escape-room
+    working_dir: /app
     ports:
       - "8080:3000"   # גישה דרך http://192.168.1.200:8080
     volumes:
-      - escape-room-data:/app/data   # SQLite — שיאים שורדים restart
+      - ./:/app                                 # הקוד מה-repo
+      - escape-room-modules:/app/node_modules   # node_modules ב-volume (התקנה חד-פעמית)
+      - escape-room-data:/data                  # SQLite שורד restart
     environment:
       - PORT=3000
-      - DB_PATH=/app/data/scores.db
+      - DB_PATH=/data/scores.db
+      - NODE_ENV=production
+    command: >
+      bash -c "
+        set -e;
+        if [ ! -d /app/node_modules/better-sqlite3 ]; then
+          echo '📦 Installing dependencies (first run only)...';
+          apt-get update -qq &&
+          apt-get install -y -qq --no-install-recommends python3 make g++ ca-certificates;
+          npm install --production --no-audit --no-fund;
+          echo '✅ Dependencies installed.';
+        fi;
+        echo '🎮 Starting Escape Room server...';
+        exec node server.js
+      "
     restart: unless-stopped
     labels:
       - "com.game.name=EscapeRoom"
 
 volumes:
+  escape-room-modules:
   escape-room-data:
