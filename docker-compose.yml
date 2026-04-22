@@ -1,8 +1,8 @@
 version: '3.8'
 
-# ארכיטקטורה ללא build — משתמש ב-image מוכן של Node.js.
-# מתקין dependencies בריצה הראשונה (cached ב-volume) וממשיך משם.
-# הימנעות מ-build פותרת את בעיית BuildKit בכמה גרסאות Portainer/Docker.
+# ארכיטקטורה עצמאית — ה-container משכפל את הרפו בעצמו.
+# אין bind mounts = אין תלות בהגדרות Portainer, אין BuildKit.
+# כל restart מושך את הגרסה האחרונה מ-GitHub (git reset --hard).
 
 services:
   escape-room:
@@ -12,9 +12,8 @@ services:
     ports:
       - "8080:3000"   # גישה דרך http://192.168.1.200:8080
     volumes:
-      - ./:/app                                 # הקוד מה-repo
-      - escape-room-modules:/app/node_modules   # node_modules ב-volume (התקנה חד-פעמית)
-      - escape-room-data:/data                  # SQLite שורד restart
+      - escape-room-app:/app     # הרפו נשמר ב-volume
+      - escape-room-data:/data   # SQLite שורד restart
     environment:
       - PORT=3000
       - DB_PATH=/data/scores.db
@@ -22,13 +21,33 @@ services:
     command: >
       bash -c "
         set -e;
-        if [ ! -d /app/node_modules/better-sqlite3 ]; then
-          echo '📦 Installing dependencies (first run only)...';
-          apt-get update -qq &&
-          apt-get install -y -qq --no-install-recommends python3 make g++ ca-certificates;
-          npm install --production --no-audit --no-fund;
-          echo '✅ Dependencies installed.';
+        echo '🔧 Setting up environment...';
+
+        if [ ! -f /app/.deps-installed ]; then
+          echo '📥 Installing system packages (one-time)...';
+          apt-get update -qq;
+          apt-get install -y -qq --no-install-recommends git ca-certificates python3 make g++;
+          rm -rf /var/lib/apt/lists/*;
+          touch /app/.deps-installed;
         fi;
+
+        if [ ! -d /app/.git ]; then
+          echo '📥 Cloning repository...';
+          rm -rf /tmp/repo;
+          git clone https://github.com/tal2420/escape_room.git /tmp/repo;
+          cp -r /tmp/repo/. /app/;
+          rm -rf /tmp/repo;
+        else
+          echo '🔄 Pulling latest from GitHub...';
+          cd /app && git fetch --quiet origin && git reset --hard origin/main || echo '(pull skipped)';
+        fi;
+
+        cd /app;
+        if [ ! -d /app/node_modules/better-sqlite3 ]; then
+          echo '📦 Installing Node dependencies...';
+          npm install --production --no-audit --no-fund;
+        fi;
+
         echo '🎮 Starting Escape Room server...';
         exec node server.js
       "
@@ -37,5 +56,5 @@ services:
       - "com.game.name=EscapeRoom"
 
 volumes:
-  escape-room-modules:
+  escape-room-app:
   escape-room-data:
