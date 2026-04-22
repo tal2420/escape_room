@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  escape-room:
+    build: .
+    image: escape-room:latest
+    container_name: escape-room
+    ports:
+      - "8080:3000"   # גישה דרך http://192.168.1.200:8080
+    volumes:
+      - escape-room-data:/app/data   # SQLite — שיאים שורדים restart
+    environment:
+      - PORT=3000
+      - DB_PATH=/app/data/scores.db
+    restart: unless-stopped
+    labels:
+      - "com.game.name=EscapeRoom"
+
+volumes:
+  escape-room-data:

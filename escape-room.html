@@ -1,0 +1,2307 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Escape Room 🔑</title>
+<style>
+  :root {
+    --bg-body: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    --bg-container: rgba(0,0,0,0.4);
+    --bg-item: linear-gradient(145deg, #2a3a5a, #1a2a4a);
+    --bg-item-hover: linear-gradient(145deg, #3a4a6a, #2a3a5a);
+    --bg-modal: linear-gradient(145deg, #2a3a5a, #1a2a4a);
+    --bg-input: #1a1a2e;
+    --bg-inventory: rgba(245, 209, 106, 0.1);
+    --bg-room: rgba(0,0,0,0.3);
+    --bg-log: rgba(0,0,0,0.5);
+    --bg-book: #5a2a2a;
+    --bg-book-hover: #7a3a3a;
+    --bg-book-border: #3a1a1a;
+    --text-primary: #eee;
+    --text-muted: #ccc;
+    --text-dim: #aaa;
+    --text-faint: #888;
+    --accent: #f5d16a;
+    --accent-hover: #ffdf80;
+    --accent-dark: #d4b04a;
+    --border-color: #444;
+    --border-item: #4a5a8a;
+    --success: #6afc6a;
+    --error: #fc6a6a;
+    --shadow: rgba(0,0,0,0.4);
+    --shadow-accent: rgba(245, 209, 106, 0.3);
+    --menu-secondary-bg: linear-gradient(145deg, #4a5a8a, #2a3a5a);
+    --tab-hover-bg: rgba(245, 209, 106, 0.1);
+  }
+  [data-theme="light"] {
+    --bg-body: linear-gradient(135deg, #e8eef5, #d5dde8, #c3cfdb);
+    --bg-container: rgba(255,255,255,0.75);
+    --bg-item: linear-gradient(145deg, #ffffff, #e8edf5);
+    --bg-item-hover: linear-gradient(145deg, #fffbe8, #efe5c0);
+    --bg-modal: linear-gradient(145deg, #ffffff, #f0f4f8);
+    --bg-input: #ffffff;
+    --bg-inventory: rgba(200, 150, 0, 0.1);
+    --bg-room: rgba(255,255,255,0.55);
+    --bg-log: rgba(255,255,255,0.7);
+    --bg-book: #8b4513;
+    --bg-book-hover: #a0522d;
+    --bg-book-border: #6b3410;
+    --text-primary: #1a1a2e;
+    --text-muted: #333;
+    --text-dim: #555;
+    --text-faint: #777;
+    --accent: #a67c00;
+    --accent-hover: #c89b1a;
+    --accent-dark: #8a6500;
+    --border-color: #bbb;
+    --border-item: #8a9ab5;
+    --success: #228822;
+    --error: #cc2222;
+    --shadow: rgba(0,0,0,0.15);
+    --shadow-accent: rgba(200, 150, 0, 0.3);
+    --menu-secondary-bg: linear-gradient(145deg, #dce4f0, #b8c4d8);
+    --tab-hover-bg: rgba(200, 150, 0, 0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 20px;
+    transition: background 0.3s, color 0.3s;
+  }
+  h1 {
+    text-align: center;
+    color: var(--accent);
+    text-shadow: 2px 2px 8px var(--shadow);
+    margin-bottom: 10px;
+    font-size: 2.2em;
+  }
+  .subtitle { text-align: center; color: var(--text-dim); margin-bottom: 20px; font-style: italic; }
+  #game { max-width: 1100px; margin: 0 auto; }
+  #status-bar {
+    display: flex; justify-content: space-between;
+    background: var(--bg-container); padding: 15px; border-radius: 10px;
+    margin-bottom: 15px; border: 1px solid var(--accent);
+    flex-wrap: wrap; gap: 10px;
+  }
+  #inventory {
+    background: var(--bg-inventory); padding: 10px 15px;
+    border-radius: 10px; margin-bottom: 15px; min-height: 50px;
+    border: 1px dashed var(--accent);
+  }
+  .inv-item {
+    display: inline-block; background: var(--accent); color: var(--bg-input);
+    padding: 5px 12px; border-radius: 20px; margin: 3px;
+    font-weight: bold; font-size: 0.9em;
+  }
+  #room {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    background: var(--bg-room); padding: 20px; border-radius: 15px;
+    border: 2px solid var(--border-color);
+  }
+  .item {
+    background: var(--bg-item);
+    border: 2px solid var(--border-item); padding: 15px 10px;
+    border-radius: 10px; cursor: pointer; text-align: center;
+    transition: all 0.2s; user-select: none;
+    color: var(--text-primary);
+  }
+  .item:hover {
+    background: var(--bg-item-hover);
+    border-color: var(--accent); transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-accent);
+  }
+  .item-emoji { font-size: 2em; display: block; margin-bottom: 5px; }
+  .item-name { font-size: 0.9em; }
+  #log {
+    background: var(--bg-log); padding: 15px; border-radius: 10px;
+    margin-top: 15px; max-height: 200px; overflow-y: auto;
+    border: 1px solid var(--border-color); font-family: 'Courier New', monospace;
+  }
+  .log-entry { padding: 5px 0; border-bottom: 1px dotted var(--border-color); animation: fadeIn 0.3s; }
+  .log-entry.important { color: var(--accent); font-weight: bold; }
+  .log-entry.success { color: var(--success); font-weight: bold; }
+  .log-entry.error { color: var(--error); }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75); z-index: 100;
+    justify-content: center; align-items: center;
+  }
+  .modal.active { display: flex; }
+  .modal-content {
+    background: var(--bg-modal);
+    padding: 30px; border-radius: 15px; max-width: 500px;
+    width: 90%; border: 2px solid var(--accent); text-align: center;
+    max-height: 90vh; overflow-y: auto;
+    color: var(--text-primary);
+  }
+  .modal h2 { color: var(--accent); margin-bottom: 15px; }
+  .modal p { margin-bottom: 20px; line-height: 1.6; }
+  button {
+    background: var(--accent); color: var(--bg-input); border: none;
+    padding: 10px 25px; border-radius: 5px; cursor: pointer;
+    font-weight: bold; font-size: 1em; margin: 5px; transition: all 0.2s;
+  }
+  button:hover { background: var(--accent-hover); transform: scale(1.05); }
+  input[type="text"] {
+    padding: 10px; font-size: 1.2em; border-radius: 5px;
+    border: 2px solid var(--accent); background: var(--bg-input); color: var(--accent);
+    text-align: center; width: 150px; letter-spacing: 5px; font-weight: bold;
+  }
+  .books-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
+  .book {
+    background: var(--bg-book); padding: 20px 5px; border-radius: 3px;
+    cursor: pointer; transition: all 0.2s; border: 1px solid var(--bg-book-border);
+    color: #fff;
+  }
+  .book:hover { background: var(--bg-book-hover); transform: translateY(-3px); }
+  .win-screen { text-align: center; padding: 40px; }
+  .win-screen h2 { font-size: 2.5em; color: var(--success); }
+
+  #menu {
+    max-width: 600px;
+    margin: 60px auto;
+    text-align: center;
+    background: var(--bg-container);
+    padding: 50px 30px;
+    border-radius: 20px;
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 40px var(--shadow-accent);
+  }
+  #menu h1 { font-size: 3em; margin-bottom: 15px; }
+  #menu .tagline {
+    color: var(--text-muted); font-size: 1.2em;
+    margin-bottom: 30px; font-style: italic;
+  }
+  .streak-panel {
+    display: flex; justify-content: center; gap: 30px;
+    margin-bottom: 30px; padding: 15px;
+    background: var(--bg-inventory);
+    border: 1px dashed var(--accent);
+    border-radius: 12px;
+  }
+  .streak-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 1.1em; font-weight: bold;
+    color: var(--text-primary);
+  }
+  .streak-value {
+    font-size: 1.8em; color: var(--accent);
+    min-width: 30px; text-align: center;
+    text-shadow: 0 0 10px var(--shadow-accent);
+  }
+  .streak-value.best { color: #ffd700; }
+  #game-streak { color: var(--accent); font-weight: bold; }
+
+  /* חלונית דרמטית של איבוד רצף */
+  .streak-lost-modal {
+    text-align: center;
+    padding: 20px 10px;
+  }
+  .streak-lost-title {
+    font-size: 3.5em;
+    color: #ff3344;
+    font-weight: bold;
+    margin: 20px 0;
+    text-shadow: 0 0 30px rgba(255, 51, 68, 0.8), 0 0 60px rgba(255, 51, 68, 0.4);
+    animation: shake 0.5s ease-in-out, fadeInBig 0.6s ease-out;
+    letter-spacing: 2px;
+  }
+  .streak-lost-sub {
+    font-size: 1.4em;
+    color: var(--text-muted);
+    margin-bottom: 30px;
+    animation: fadeIn 0.8s ease-out 0.3s both;
+  }
+  .revive-btn {
+    display: block; width: 280px; margin: 12px auto;
+    padding: 15px 20px; font-size: 1.15em;
+    background: linear-gradient(145deg, #ff5577, #cc2244);
+    color: white; border: 2px solid #ff88aa;
+    border-radius: 12px; cursor: pointer; font-weight: bold;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(255, 51, 68, 0.5);
+  }
+  .revive-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 51, 68, 0.7);
+  }
+  .revive-btn:disabled {
+    background: #555; color: #aaa; border-color: #666;
+    cursor: not-allowed; box-shadow: none;
+  }
+  .revive-btn .cost { font-size: 0.9em; opacity: 0.9; }
+  .continue-btn {
+    display: block; width: 280px; margin: 12px auto;
+    padding: 15px 20px; font-size: 1.05em;
+    background: transparent; color: var(--text-muted);
+    border: 2px solid var(--border-color); border-radius: 12px;
+    cursor: pointer; font-weight: bold; transition: all 0.2s;
+  }
+  .continue-btn:hover { color: var(--text-primary); border-color: var(--accent); }
+  .coins-inline {
+    display: inline-flex; align-items: center; gap: 5px;
+    color: #ffd700; font-weight: bold;
+  }
+
+  @keyframes fadeInBig {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+  }
+
+  /* סקינים */
+  html[data-skin="forest"]  { --bg-body: linear-gradient(135deg, #0f3a0f, #1d5a2d, #2a7a3a); }
+  html[data-skin="sunset"]  { --bg-body: linear-gradient(135deg, #ff6b6b, #feca57, #ff9ff3); }
+  html[data-skin="galaxy"]  { --bg-body: radial-gradient(ellipse at top, #1a0a4e, #0a0a2e 60%), #000; }
+  html[data-skin="ocean"]   { --bg-body: linear-gradient(135deg, #006994, #0099cc, #00c9db); }
+  html[data-skin="neon"]    { --bg-body: linear-gradient(135deg, #ff00aa, #00ffff, #aa00ff); }
+  html[data-skin="cherry"]  { --bg-body: linear-gradient(135deg, #ffb7c5, #ff89a8, #ffd1dc); }
+
+  /* חנות */
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+  }
+  .shop-item {
+    background: var(--bg-item);
+    border: 2px solid var(--border-item);
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .shop-item:hover { border-color: var(--accent); transform: translateY(-3px); }
+  .shop-item.equipped { border-color: var(--success); box-shadow: 0 0 20px rgba(106, 252, 106, 0.3); }
+  .shop-item .preview {
+    width: 100%; height: 80px;
+    border-radius: 8px; margin-bottom: 10px;
+    border: 1px solid var(--border-color);
+  }
+  .shop-item .name { font-weight: bold; margin-bottom: 5px; color: var(--text-primary); }
+  .shop-item .price { color: #ffd700; font-size: 1em; margin-bottom: 10px; }
+  .shop-btn {
+    width: 100%; padding: 8px;
+    border-radius: 8px; border: none;
+    font-weight: bold; cursor: pointer;
+    font-size: 0.95em; transition: all 0.2s;
+  }
+  .shop-btn.buy { background: var(--accent); color: var(--bg-input); }
+  .shop-btn.buy:hover { background: var(--accent-hover); }
+  .shop-btn.equip { background: var(--menu-secondary-bg); color: var(--accent); border: 1px solid var(--border-item); }
+  .shop-btn.equipped { background: var(--success); color: white; cursor: default; }
+  .shop-btn.disabled { background: #555; color: #999; cursor: not-allowed; }
+  .shop-balance {
+    text-align: center; padding: 15px;
+    background: var(--bg-inventory);
+    border-radius: 10px; margin-bottom: 20px;
+    border: 1px dashed #ffd700;
+    font-size: 1.1em;
+  }
+  .shop-balance .amount { color: #ffd700; font-size: 1.4em; font-weight: bold; }
+
+  /* פרד המוכר 🐱 */
+  .shopkeeper {
+    display: flex; align-items: center; gap: 15px;
+    background: var(--bg-container); padding: 15px;
+    border-radius: 15px; margin-bottom: 20px;
+    border: 2px solid var(--accent);
+    box-shadow: 0 4px 15px var(--shadow-accent);
+  }
+  .shopkeeper-avatar {
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    overflow: hidden; flex-shrink: 0;
+    background: linear-gradient(135deg, #2a2a2a, #000);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    box-shadow: 0 0 20px var(--shadow-accent);
+  }
+  .shopkeeper-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .shopkeeper-fallback {
+    font-size: 3.2em;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
+  .shopkeeper-name {
+    font-size: 0.75em; color: var(--accent);
+    position: absolute; bottom: -2px; left: 0; right: 0;
+    text-align: center; background: rgba(0,0,0,0.6);
+    padding: 2px 0; font-weight: bold;
+  }
+  .shopkeeper-speech {
+    flex: 1; position: relative;
+    background: var(--bg-item);
+    padding: 12px 18px; border-radius: 14px;
+    border: 1px solid var(--border-item);
+    font-size: 1.05em; color: var(--text-primary);
+    min-height: 50px; display: flex; align-items: center;
+  }
+  /* זנב הבלון — RTL */
+  html[dir="rtl"] .shopkeeper-speech::before {
+    content: ''; position: absolute;
+    right: -10px; top: 50%; transform: translateY(-50%);
+    width: 0; height: 0;
+    border-left: 12px solid var(--bg-item);
+    border-top: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+    filter: drop-shadow(1px 0 0 var(--border-item));
+  }
+  /* זנב הבלון — LTR */
+  html[dir="ltr"] .shopkeeper-speech::before {
+    content: ''; position: absolute;
+    left: -10px; top: 50%; transform: translateY(-50%);
+    width: 0; height: 0;
+    border-right: 12px solid var(--bg-item);
+    border-top: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+    filter: drop-shadow(-1px 0 0 var(--border-item));
+  }
+  .shopkeeper-avatar:hover {
+    animation: bounce 0.4s ease;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .hint-package {
+    background: var(--bg-item);
+    border: 2px solid var(--border-item);
+    padding: 20px; border-radius: 12px;
+    margin: 10px 0;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 15px;
+  }
+  .hint-package .label { font-size: 1.1em; font-weight: bold; color: var(--text-primary); }
+  .hint-package .package-price { color: #ffd700; font-weight: bold; font-size: 1.1em; }
+  .hint-action-btn {
+    padding: 8px 16px; font-size: 0.95em;
+    background: var(--accent); color: var(--bg-input);
+    border: none; border-radius: 8px; cursor: pointer;
+    font-weight: bold;
+  }
+  .hint-action-btn:hover { background: var(--accent-hover); }
+  .hint-action-btn:disabled { background: #555; color: #999; cursor: not-allowed; }
+  .menu-btn {
+    display: block; width: 280px; margin: 12px auto;
+    padding: 18px 25px; font-size: 1.2em;
+    background: linear-gradient(145deg, var(--accent), var(--accent-dark));
+    color: var(--bg-input);
+    border: 2px solid var(--accent-hover);
+    border-radius: 12px;
+    cursor: pointer; font-weight: bold;
+    transition: all 0.2s;
+    box-shadow: 0 4px 10px var(--shadow);
+  }
+  .menu-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px var(--shadow-accent);
+  }
+  .menu-btn.secondary {
+    background: var(--menu-secondary-bg);
+    color: var(--accent);
+    border-color: var(--border-item);
+  }
+  .menu-footer { margin-top: 40px; color: var(--text-faint); font-size: 0.9em; }
+
+  #scores-screen, #settings-screen {
+    max-width: 700px; margin: 40px auto;
+    background: var(--bg-container); padding: 30px;
+    border-radius: 20px; border: 2px solid var(--accent);
+  }
+  #scores-screen h1, #settings-screen h1 { font-size: 2em; margin-bottom: 20px; }
+  .tabs {
+    display: flex; gap: 10px; margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+  }
+  .tab {
+    padding: 12px 25px; background: transparent; border: none;
+    color: var(--text-dim); cursor: pointer; font-size: 1em; font-weight: bold;
+    border-bottom: 3px solid transparent; transition: all 0.2s;
+  }
+  .tab:hover { color: var(--accent); }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--tab-hover-bg);
+  }
+  .scores-table { width: 100%; border-collapse: collapse; color: var(--text-primary); }
+  .scores-table th, .scores-table td {
+    padding: 12px 8px; text-align: center;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .scores-table th { color: var(--accent); font-size: 0.95em; }
+  .scores-table tr:hover { background: var(--tab-hover-bg); }
+  .scores-table .rank { font-weight: bold; font-size: 1.1em; }
+  .scores-table .rank-1 { color: #ffd700; }
+  .scores-table .rank-2 { color: #c0c0c0; }
+  .scores-table .rank-3 { color: #cd7f32; }
+  .empty-scores { text-align: center; padding: 40px; color: var(--text-faint); font-style: italic; }
+  .scores-note {
+    margin-top: 15px; padding: 10px;
+    background: var(--tab-hover-bg); border-radius: 8px;
+    color: var(--text-dim); font-size: 0.85em; text-align: center;
+  }
+  .name-input {
+    padding: 12px; font-size: 1.1em; border-radius: 8px;
+    border: 2px solid var(--accent); background: var(--bg-input); color: var(--accent);
+    text-align: center; width: 250px; letter-spacing: 1px;
+    font-weight: bold; margin: 10px;
+  }
+
+  /* הגדרות */
+  .settings-group {
+    background: var(--bg-container); padding: 20px;
+    border-radius: 12px; margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+  }
+  .settings-group h3 {
+    color: var(--accent); margin-bottom: 15px;
+    font-size: 1.2em;
+  }
+  .option-row {
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+  }
+  .option-btn {
+    flex: 1; min-width: 120px;
+    padding: 15px 20px;
+    background: var(--bg-item); color: var(--text-primary);
+    border: 2px solid var(--border-item);
+    border-radius: 10px; cursor: pointer;
+    font-weight: bold; font-size: 1em;
+    transition: all 0.2s;
+  }
+  .option-btn:hover {
+    border-color: var(--accent);
+    background: var(--bg-item-hover);
+  }
+  .option-btn.active {
+    background: var(--accent); color: var(--bg-input);
+    border-color: var(--accent-hover);
+  }
+
+  @media (max-width: 600px) {
+    #room { grid-template-columns: repeat(2, 1fr); }
+    h1 { font-size: 1.5em; }
+    #menu h1 { font-size: 2em; }
+  }
+</style>
+</head>
+<body>
+
+<div id="menu">
+  <h1 data-i18n="title"></h1>
+  <div class="tagline" data-i18n="tagline"></div>
+  <div class="streak-panel">
+    <div class="streak-item">
+      <span data-i18n="streak_label"></span>
+      <span class="streak-value" data-streak>0</span>
+    </div>
+    <div class="streak-item">
+      <span data-i18n="best_streak_label"></span>
+      <span class="streak-value best" data-best-streak>0</span>
+    </div>
+    <div class="streak-item">
+      <span data-i18n="coins_label"></span>
+      <span class="streak-value" style="color:#ffd700" data-coins>0</span>
+    </div>
+  </div>
+  <button class="menu-btn" onclick="startGame()" data-i18n="play"></button>
+  <button class="menu-btn secondary" onclick="showInstructions()" data-i18n="instructions"></button>
+  <button class="menu-btn secondary" onclick="showScores()" data-i18n="scores"></button>
+  <button class="menu-btn secondary" onclick="showShop()" data-i18n="shop"></button>
+  <button class="menu-btn secondary" onclick="showSettings()" data-i18n="settings"></button>
+  <div class="menu-footer"><span data-i18n="version"></span></div>
+</div>
+
+<div id="scores-screen" style="display:none">
+  <h1 style="text-align:center" data-i18n="scores_title"></h1>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('personal')" data-i18n="tab_personal"></button>
+    <button class="tab" onclick="switchTab('global')" data-i18n="tab_global"></button>
+  </div>
+  <div id="scores-content"></div>
+  <div style="text-align:center;margin-top:20px">
+    <button class="menu-btn secondary" onclick="backToMenu()" style="width:200px" data-i18n="back_to_menu"></button>
+  </div>
+</div>
+
+<div id="shop-screen" style="display:none">
+  <h1 style="text-align:center" data-i18n="shop_title"></h1>
+
+  <div class="shopkeeper" onclick="fredMeow()">
+    <div class="shopkeeper-avatar" title="פרד">
+      <img src="fred.jpg" alt="Fred" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <span class="shopkeeper-fallback" style="display:none">🐱</span>
+      <span class="shopkeeper-name">פרד</span>
+    </div>
+    <div class="shopkeeper-speech" id="fred-speech"></div>
+  </div>
+
+  <div class="shop-balance">
+    <span data-i18n="coins_label"></span>
+    <span class="amount" data-coins>0</span>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchShopTab('skins')" data-i18n="tab_skins"></button>
+    <button class="tab" onclick="switchShopTab('hints')" data-i18n="tab_hints"></button>
+  </div>
+  <div id="shop-content"></div>
+  <div style="text-align:center;margin-top:20px">
+    <button class="menu-btn secondary" onclick="backToMenu()" style="width:200px" data-i18n="back_to_menu"></button>
+  </div>
+</div>
+
+<div id="settings-screen" style="display:none">
+  <h1 style="text-align:center" data-i18n="settings_title"></h1>
+
+  <div class="settings-group">
+    <h3 data-i18n="language_label"></h3>
+    <div class="option-row">
+      <button class="option-btn" data-lang="he" onclick="setLanguage('he')">עברית</button>
+      <button class="option-btn" data-lang="en" onclick="setLanguage('en')">English</button>
+    </div>
+  </div>
+
+  <div class="settings-group">
+    <h3 data-i18n="theme_label"></h3>
+    <div class="option-row">
+      <button class="option-btn" data-theme-btn="dark" onclick="setTheme('dark')">🌙 <span data-i18n="theme_dark"></span></button>
+      <button class="option-btn" data-theme-btn="light" onclick="setTheme('light')">☀️ <span data-i18n="theme_light"></span></button>
+    </div>
+  </div>
+
+  <div class="settings-group">
+    <h3 data-i18n="music_label"></h3>
+    <div class="option-row">
+      <button class="option-btn" data-music="on" onclick="toggleMusic(true)">🎵 <span data-i18n="audio_on"></span></button>
+      <button class="option-btn" data-music="off" onclick="toggleMusic(false)">🔇 <span data-i18n="audio_off"></span></button>
+    </div>
+  </div>
+
+  <div class="settings-group">
+    <h3 data-i18n="sfx_label"></h3>
+    <div class="option-row">
+      <button class="option-btn" data-sfx="on" onclick="toggleSfx(true)">🔊 <span data-i18n="audio_on"></span></button>
+      <button class="option-btn" data-sfx="off" onclick="toggleSfx(false)">🔇 <span data-i18n="audio_off"></span></button>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:20px">
+    <button class="menu-btn secondary" onclick="backToMenu()" style="width:200px" data-i18n="back_to_menu"></button>
+  </div>
+</div>
+
+<div id="game" style="display:none">
+  <h1 data-i18n="game_title"></h1>
+  <div class="subtitle">
+    <button onclick="backToMenu()" style="padding:5px 15px;font-size:0.85em" data-i18n="back_to_menu"></button>
+    <button onclick="useHint()" id="hint-btn" style="padding:5px 15px;font-size:0.85em;background:#ffb800;color:#1a1a2e">💡 רמז (0)</button>
+    <button onclick="giveUp()" style="padding:5px 15px;font-size:0.85em;background:#c94444;color:white" data-i18n="give_up_btn"></button>
+  </div>
+
+  <div id="status-bar">
+    <div><span data-i18n="time_label"></span> <span id="timer">00:00</span></div>
+    <div><span data-i18n="moves_label"></span> <span id="moves">0</span></div>
+    <div><span data-i18n="code_label"></span> <span id="code-display">????</span></div>
+    <div><span data-i18n="streak_label"></span> <span id="game-streak" data-streak>0</span></div>
+    <div><span data-i18n="coins_label"></span> <span style="color:#ffd700;font-weight:bold" data-coins>0</span></div>
+  </div>
+
+  <div id="inventory">
+    <strong data-i18n="inventory_label"></strong> <span id="inv-items"></span>
+  </div>
+
+  <div id="room"></div>
+
+  <div id="log"></div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content" id="modal-content"></div>
+</div>
+
+<script>
+// ============ תרגומים ============
+const TRANSLATIONS = {
+  he: {
+    title: '🏰 חדר הבריחה 🔑',
+    tagline: 'אתה לכוד בחדר מסתורי.<br>מצא את הקוד, גלה את המפתח, וברח!',
+    play: '🎮 שחק',
+    instructions: '📖 הוראות',
+    scores: '🏆 שיאים',
+    settings: '⚙️ הגדרות',
+    version: 'גרסה 1.3 • כל משחק רנדומלי',
+    game_title: '🏰 חדר הבריחה הגדול 🔑',
+    streak_label: '🔥 רצף:',
+    best_streak_label: '🏆 שיא:',
+    streak_increased: '🔥 הרצף עלה ל-{streak}!',
+    new_best_streak: '🎊 שיא חדש של {streak}!',
+    streak_lost: '💔 הרצף הקודם שלך ({streak}) אבד כי לא סיימת את המשחק הקודם.',
+    give_up_btn: '🏳️ ויתור',
+    give_up_confirm_title: '🏳️ לוותר?',
+    give_up_confirm_msg: 'אם תוותר עכשיו, הרצף שלך ({streak}) יאבד. בטוח?',
+    give_up_yes: '🏳️ כן, לוותר',
+    give_up_no: '⬅️ לא, להמשיך',
+    give_up_log: '🏳️ ויתרת. הרצף אופס.',
+    time_up_title: '⏰ הזמן נגמר!',
+    streak_lost_continue_no_streak: 'עברו 2 דקות. רוצה להמשיך במשחק?',
+    streak_lost_continue: '💔 הרצף שלך ({streak}) נאבד. רוצה להמשיך במשחק?',
+    continue_playing: '▶️ כן, להמשיך',
+    time_up_log: '⏰ עברו 2 דקות! הרצף אבד, אבל אפשר להמשיך.',
+    time_limit_instr: '⏱️ <strong>מגבלת זמן:</strong> אחרי 2 דקות הרצף נאבד (אפשר להמשיך לשחק).',
+    music_label: '🎵 מוזיקת רקע',
+    sfx_label: '🔊 צלילי משחק',
+    audio_on: 'מופעל',
+    audio_off: 'כבוי',
+    coins_label: '🪙 מטבעות:',
+    coins_earned: '🪙 +3 מטבעות! (ניצחון מהיר)',
+    shop: '🛒 חנות',
+    shop_title: '🛒 חנות',
+    tab_skins: '🎨 רקעים',
+    tab_hints: '💡 רמזים',
+    shop_buy: '💰 קנה',
+    shop_equip: '✨ הפעל',
+    shop_equipped: '✓ פעיל',
+    shop_owned: '✓ שלך',
+    shop_insufficient: '💸 אין מטבעות',
+    skin_bought_log: '✨ קנית רקע: {name}',
+    skin_equipped_log: '🎨 רקע פעיל: {name}',
+    hint_shop_desc: 'קנה רמז כדי לגלות ספרה בזמן משחק. כל רמז: 5 מטבעות.',
+    hint_bundle_one: '1 רמז',
+    hint_bundle_three: '3 רמזים (בונוס)',
+    hint_bundle_five: '5 רמזים (בונוס)',
+    hint_you_have: 'יש לך:',
+    hint_bought_log: '💡 קנית {n} רמזים! סה"כ: {total}',
+    hint_use_btn: '💡 השתמש ברמז',
+    hint_no_hints_modal_title: '💡 אין לך רמזים',
+    hint_no_hints_modal_msg: 'אתה יכול לקנות רמזים בחנות תמורת מטבעות.',
+    go_to_shop: '🛒 לחנות',
+    hint_reveal_title: '💡 רמז!',
+    hint_reveal_msg: 'הספרה <strong>{digit}</strong> נמצאת <strong>{location}</strong>',
+    hint_reveal_log: '💡 רמז חשף ספרה "{digit}" ב{location}',
+    hint_all_found_msg: 'כבר מצאת את כל הספרות!',
+    skin_default: 'ברירת מחדל',
+    skin_forest: '🌲 יער',
+    skin_sunset: '🌅 שקיעה',
+    skin_galaxy: '🌌 גלקסיה',
+    skin_ocean: '🌊 אוקיינוס',
+    skin_neon: '🎆 ניאון',
+    skin_cherry: '🌸 פריחה',
+    fred_name: 'פרד',
+    fred_welcome: 'מיאו! ברוך הבא לחנות של פרד 🐾',
+    fred_skins: 'יש לי רקעים חדשים מכל הממלכה! תבחר יופי 🎨',
+    fred_hints: 'תקוע בחדר? אני יודע את כל הסודות... 😼',
+    fred_bought_skin: 'בחירה מצוינת! מיאו-יוף 🐾',
+    fred_bought_hint: 'השתמש בחכמה! אני סומך עליך 😺',
+    fred_equipped: 'וואו! זה נראה פצצה! 💫',
+    fred_poor: 'אין לך מספיק מטבעות... חזור כשתנצח עוד! 😸',
+    fred_welcome_menu: 'מיאו! מוכן להרפתקה? 🐾',
+    streak_lost_big: 'איבדת את הרצף!',
+    streak_lost_big_sub: 'הרצף שלך ({streak}) נעלם...',
+    revive_btn: '🫀 החייאה',
+    revive_cost: '({cost} מטבעות)',
+    revive_success: '🫀 הרצף הוחייה! ({streak})',
+    not_enough_coins: 'אין מספיק מטבעות',
+    continue_btn: '▶️ המשך בלי רצף',
+    back_to_menu: '◀ חזרה לתפריט',
+    time_label: '⏱️ זמן:',
+    moves_label: '🔍 פעולות:',
+    code_label: '🔢 קוד:',
+    inventory_label: '🎒 תרמיל:',
+    inv_empty: 'ריק...',
+    added_to_inv: '✨ הוספת לתרמיל: {item}',
+
+    // Scores
+    scores_title: '🏆 טבלת שיאים 🏆',
+    tab_personal: '👤 השיאים שלי',
+    tab_global: '🌍 שיאים עולמיים',
+    col_rank: 'דירוג', col_name: 'שם', col_time: 'זמן', col_moves: 'פעולות', col_date: 'תאריך',
+    empty_personal: 'עדיין אין לך שיאים. נצח משחק כדי להופיע כאן!',
+    empty_global: 'אין עדיין שיאים עולמיים.',
+    personal_note: '📊 שיאים אישיים נשמרים בדפדפן שלך בלבד.',
+    global_note: '🌍 שיאים משותפים בין כל השחקנים בשרת.',
+
+    // Settings
+    settings_title: '⚙️ הגדרות',
+    language_label: '🌐 שפה',
+    theme_label: '🎨 ערכת נושא',
+    theme_dark: 'כהה',
+    theme_light: 'בהיר',
+
+    // Instructions
+    instr_title: '📖 הוראות המשחק',
+    instr_goal: '🎯 <strong>המטרה:</strong> למצוא את המפתח ולפתוח את דלת היציאה.',
+    instr_code: '🔢 <strong>הקוד:</strong> 4 ספרות מוחבאות בחדר. מצא אותן וסדר אותן נכון.',
+    instr_scrolls: '📜 <strong>המגילות:</strong> חושפות את סדר הספרות — אבל תצטרך זכוכית מגדלת.',
+    instr_books: '📚 <strong>הספרייה:</strong> באחד הספרים יש רמז חשוב.',
+    instr_key: '🔑 <strong>המפתח:</strong> מוחבא במקום נעול — הקוד פותח אותו.',
+    instr_random: '🎲 <strong>רנדומליות:</strong> כל משחק — סידור חדש של מקומות וספרות.',
+
+    // Win
+    win_title: '🎉 ברחת מהחדר! 🎉',
+    win_msg: 'הדלת נפתחה והאור הבוקע ליטף את פניך.',
+    enter_name: 'הכנס את שמך לטבלת השיאים:',
+    name_placeholder: 'השם שלך...',
+    save_score: '💾 שמור שיא',
+    skip_scores: '🏆 דלג לשיאים',
+    play_again: '🔄 שחק שוב',
+    won_log: '🎉🎉🎉 ניצחת במשחק! 🎉🎉🎉',
+    new_game_started: '🎮 משחק חדש התחיל! הסידור שונה לחלוטין.',
+    hint_tip: '💡 טיפ: חפש ספר עם רמז, וזכוכית מגדלת לקריאת המגילות.',
+
+    // Door
+    door_title: '🚪 דלת יציאה',
+    door_locked: 'הדלת הכבדה נעולה בחוזקה. חור מנעול גדול ממתין.',
+    door_need_key: 'אתה זקוק למפתח כדי לצאת.',
+    door_log_locked: 'הדלת נעולה. חסר מפתח.',
+
+    // Key found
+    key_found_title: '🎉 מצאת את המפתח!',
+    key_found_extra: 'עכשיו תוכל לפתוח את הדלת!',
+    key_found_log: '🔑 מצאת את המפתח הגדול!!!',
+    key_item_name: '🔑 המפתח הגדול',
+
+    // Key location
+    type_code: 'הקלד קוד בן 4 ספרות:',
+    try_open: '🔓 נסה לפתוח',
+    cancel: 'ביטול',
+    close: 'סגור',
+    opened: '🎊 {name} נפתח!',
+    wrong_code: '❌ "{code}" — הקוד שגוי.',
+    empty_location: '{name} כבר ריק.',
+
+    // Digits
+    digit_found: '✨ {verb}: "{digit}"!',
+    nothing_special: 'לא מצאת כלום מיוחד כאן.',
+    already_checked: 'כבר בדקת כאן.',
+    need_preparation: 'משהו חוסם אותך... אולי צריך להכין משהו קודם.',
+
+    // Items
+    item_bed: 'מיטה',
+    item_cabinet: 'ארון עץ',
+    item_curtains: 'וילונות',
+    item_books: 'ספרייה',
+    item_painting: 'תמונת שמן',
+    item_small_pic: 'תמונה קטנה',
+    item_desk: 'שולחן וכתיבה',
+    item_chair: 'כיסא',
+    item_scrolls: 'מגילות עתיקות',
+    item_mirror: 'מראה ענקית',
+    item_vase: 'אגרטל חרסינה',
+    item_mask: 'מסיכה',
+    item_rug: 'שטיח פרסי',
+    item_sofa: 'ספה',
+    item_clock: 'שעון סבא',
+    item_chandelier: 'נברשת קריסטל',
+    item_floor: 'אריחי רצפה',
+    item_door: 'דלת (יציאה)',
+
+    // Digit hideout names
+    hide_rug: 'מתחת לשטיח',
+    hide_vase: 'בתוך האגרטל',
+    hide_desk: 'בתוך הנר',
+    hide_mirror: 'מאחורי המראה',
+    hide_bed: 'מתחת למיטה',
+    hide_painting: 'מאחורי תמונת השמן',
+    hide_small_pic: 'מאחורי התמונה הקטנה',
+    hide_floor: 'מתחת לאריח רופף',
+    hide_chair: 'מתחת לכיסא',
+    hide_mask: 'מאחורי המסיכה',
+
+    // Verbs
+    verb_rug: 'הרמת את השטיח ומצאת פתק',
+    verb_vase: 'הפכת את האגרטל ונפל פתק',
+    verb_desk: 'בתוך שעוות הנר הכבוי מצאת פתק',
+    verb_mirror: 'הסתכלת מאחורי המראה ומצאת פתק',
+    verb_bed: 'זחלת מתחת למיטה ומצאת פתק',
+    verb_painting: 'הזזת את התמונה ומצאת פתק',
+    verb_small_pic: 'מאחורי התמונה הקטנה מצאת פתק',
+    verb_floor: 'הרמת אריח רופף ומצאת פתק',
+    verb_chair: 'הפכת את הכיסא ומצאת פתק',
+    verb_mask: 'הסרת את המסיכה ומצאת פתק',
+
+    // Key location descriptions
+    clock_name: 'שעון סבא', clock_emoji: '⏰',
+    clock_desc: 'שעון ענק עם 4 גלגלות ספרות על דלתו.',
+    clock_hidden: 'בתוך שעון הסבא, מאחורי המטוטלת, נח מפתח ברונזה גדול.',
+    cabinet_name: 'ארון עץ', cabinet_emoji: '🗄️',
+    cabinet_desc: 'ארון עתיק עם מנעול דיגיטלי בן 4 ספרות.',
+    cabinet_hidden: 'בתוך הארון, בין בגדים ישנים, מצאת מפתח ברונזה גדול.',
+
+    // Special handlers
+    curtains_title: '🪟 וילונות קטיפה',
+    curtains_desc: 'הזזת את הווילונות — החלון חסום בלבנים.',
+    curtains_desc2: 'אין מוצא דרך החלון.',
+    curtains_log: 'החלון חסום בלבנים.',
+
+    books_title: '📚 ספרייה',
+    books_prompt: '15 ספרים מאובקים. איזה תרצה לקרוא?',
+    book_hint_log: '📖 ספר {n}: רמז חשוב!',
+    book_hint_title: '📖 ספר {n}',
+    book_hint_text: '"מי שמחפש — ימצא.<br>ארבע ספרות מוסתרות בחדר הזה,<br>כל אחת במקום אחר.<br>חפש בכל פינה — גם במקומות הכי בלתי צפויים.<br>מי שיקרא את המגילות — ידע את סדרן."',
+    book_hint_tip: 'טיפ: חפש זכוכית מגדלת לקרוא את המגילות.',
+    book_boring: 'ספר {n}: סיפור ישן ומשעמם. לא רלוונטי.',
+
+    desk_title: '🕯️ שולחן כתיבה',
+    desk_lit: 'נר דולק בלהבה קטנה.',
+    desk_extra: 'השולחן ריק חוץ מהנר.',
+    desk_blow: '🌬️ כבה את הנר',
+    desk_blow_log: '🌬️ כיבית את הנר. זיקוק עשן עולה...',
+    desk_drawer: 'בדוק מגירה',
+    desk_drawer_empty: 'המגירה ריקה.',
+    desk_out: 'הנר כבוי וזיקוק עשן עולה.',
+    desk_check: 'בדוק את הנר הכבוי',
+
+    sofa_title: '🛋️ ספה',
+    sofa_desc: 'ספה מרופדת ונוחה.',
+    sofa_check: 'בדוק בין הכריות',
+    sofa_magnifier: 'מצאת זכוכית מגדלת בין הכריות!',
+    sofa_already: 'כבר חיפשת בין הכריות.',
+    magnifier_item: '🔎 זכוכית מגדלת',
+
+    scrolls_title_read: '📜 מגילות (דרך זכוכית מגדלת)',
+    scrolls_order: '"סדר הספרות נקבע לפי המיקום:<br>{order}"',
+    scrolls_location: 'הקוד פותח את: <strong>{name}</strong>',
+    scrolls_log: '📜 גילית את הסדר ואת מיקום המפתח!',
+    scrolls_title: '📜 מגילות עתיקות',
+    scrolls_cant_read: 'האותיות זעירות מדי — אינך מצליח לקרוא.',
+    scrolls_need_magnifier: 'אולי יש משהו שיגדיל את הטקסט...',
+    scrolls_small_log: 'המגילות קטנות מדי לקריאה.',
+
+    chandelier_title: '💡 נברשת קריסטל',
+    chandelier_desc: 'נברשת ענקית מעל מרכז החדר.',
+    chandelier_high: 'היא גבוהה מדי — אין איך להגיע אליה.',
+    chandelier_distract: 'אולי היא רק מסיחה את הדעת...',
+
+    // Ordinals
+    ord_first: 'ראשונה', ord_second: 'שנייה', ord_third: 'שלישית', ord_fourth: 'רביעית',
+
+    anonymous: 'אנונימי'
+  },
+
+  en: {
+    title: '🏰 Escape Room 🔑',
+    tagline: 'You are trapped in a mysterious room.<br>Find the code, discover the key, and escape!',
+    play: '🎮 Play',
+    instructions: '📖 Instructions',
+    scores: '🏆 Scores',
+    settings: '⚙️ Settings',
+    version: 'v1.3 • Every game is random',
+    game_title: '🏰 The Grand Escape Room 🔑',
+    streak_label: '🔥 Streak:',
+    best_streak_label: '🏆 Best:',
+    streak_increased: '🔥 Streak rose to {streak}!',
+    new_best_streak: '🎊 New best of {streak}!',
+    streak_lost: '💔 Your previous streak ({streak}) is lost because you didn\'t finish the previous game.',
+    give_up_btn: '🏳️ Give up',
+    give_up_confirm_title: '🏳️ Give up?',
+    give_up_confirm_msg: 'If you give up now, your streak ({streak}) will be lost. Sure?',
+    give_up_yes: '🏳️ Yes, give up',
+    give_up_no: '⬅️ No, continue',
+    give_up_log: '🏳️ You gave up. Streak reset.',
+    time_up_title: '⏰ Time\'s up!',
+    streak_lost_continue_no_streak: '2 minutes passed. Continue playing?',
+    streak_lost_continue: '💔 Your streak ({streak}) is lost. Continue playing?',
+    continue_playing: '▶️ Yes, continue',
+    time_up_log: '⏰ 2 minutes passed! Streak lost, but you can continue.',
+    time_limit_instr: '⏱️ <strong>Time limit:</strong> After 2 minutes the streak is lost (you can keep playing).',
+    music_label: '🎵 Background Music',
+    sfx_label: '🔊 Sound Effects',
+    audio_on: 'On',
+    audio_off: 'Off',
+    coins_label: '🪙 Coins:',
+    coins_earned: '🪙 +3 coins! (fast win)',
+    shop: '🛒 Shop',
+    shop_title: '🛒 Shop',
+    tab_skins: '🎨 Skins',
+    tab_hints: '💡 Hints',
+    shop_buy: '💰 Buy',
+    shop_equip: '✨ Equip',
+    shop_equipped: '✓ Equipped',
+    shop_owned: '✓ Owned',
+    shop_insufficient: '💸 Not enough coins',
+    skin_bought_log: '✨ Bought skin: {name}',
+    skin_equipped_log: '🎨 Active skin: {name}',
+    hint_shop_desc: 'Buy hints to reveal a digit during a game. Each hint: 5 coins.',
+    hint_bundle_one: '1 hint',
+    hint_bundle_three: '3 hints (bonus)',
+    hint_bundle_five: '5 hints (bonus)',
+    hint_you_have: 'You have:',
+    hint_bought_log: '💡 Bought {n} hints! Total: {total}',
+    hint_use_btn: '💡 Use a hint',
+    hint_no_hints_modal_title: '💡 No hints',
+    hint_no_hints_modal_msg: 'You can buy hints in the shop.',
+    go_to_shop: '🛒 To shop',
+    hint_reveal_title: '💡 Hint!',
+    hint_reveal_msg: 'Digit <strong>{digit}</strong> is <strong>{location}</strong>',
+    hint_reveal_log: '💡 Hint revealed digit "{digit}" {location}',
+    hint_all_found_msg: 'You already found all digits!',
+    skin_default: 'Default',
+    skin_forest: '🌲 Forest',
+    skin_sunset: '🌅 Sunset',
+    skin_galaxy: '🌌 Galaxy',
+    skin_ocean: '🌊 Ocean',
+    skin_neon: '🎆 Neon',
+    skin_cherry: '🌸 Blossom',
+    fred_name: 'Fred',
+    fred_welcome: 'Meow! Welcome to Fred\'s shop 🐾',
+    fred_skins: 'I\'ve got new backgrounds from all over the kingdom! 🎨',
+    fred_hints: 'Stuck in the room? I know all the secrets... 😼',
+    fred_bought_skin: 'Excellent choice! Purr-fect 🐾',
+    fred_bought_hint: 'Use it wisely! I believe in you 😺',
+    fred_equipped: 'Wow! Looks amazing! 💫',
+    fred_poor: 'Not enough coins... come back after more wins! 😸',
+    fred_welcome_menu: 'Meow! Ready for an adventure? 🐾',
+    streak_lost_big: 'You lost your streak!',
+    streak_lost_big_sub: 'Your streak ({streak}) is gone...',
+    revive_btn: '🫀 Revive',
+    revive_cost: '({cost} coins)',
+    revive_success: '🫀 Streak revived! ({streak})',
+    not_enough_coins: 'Not enough coins',
+    continue_btn: '▶️ Continue without streak',
+    back_to_menu: '◀ Back to menu',
+    time_label: '⏱️ Time:',
+    moves_label: '🔍 Moves:',
+    code_label: '🔢 Code:',
+    inventory_label: '🎒 Inventory:',
+    inv_empty: 'Empty...',
+    added_to_inv: '✨ Added to inventory: {item}',
+
+    scores_title: '🏆 Leaderboard 🏆',
+    tab_personal: '👤 My scores',
+    tab_global: '🌍 Global scores',
+    col_rank: 'Rank', col_name: 'Name', col_time: 'Time', col_moves: 'Moves', col_date: 'Date',
+    empty_personal: 'No scores yet. Win a game to appear here!',
+    empty_global: 'No global scores yet.',
+    personal_note: '📊 Personal scores are stored only in your browser.',
+    global_note: '🌍 Scores are shared across all players on the server.',
+
+    settings_title: '⚙️ Settings',
+    language_label: '🌐 Language',
+    theme_label: '🎨 Theme',
+    theme_dark: 'Dark',
+    theme_light: 'Light',
+
+    instr_title: '📖 How to play',
+    instr_goal: '🎯 <strong>Goal:</strong> Find the key and open the exit door.',
+    instr_code: '🔢 <strong>Code:</strong> 4 digits hidden in the room. Find them and order them correctly.',
+    instr_scrolls: '📜 <strong>Scrolls:</strong> Reveal the digit order — but you need a magnifier.',
+    instr_books: '📚 <strong>Bookshelf:</strong> One book has an important clue.',
+    instr_key: '🔑 <strong>Key:</strong> Hidden in a locked place — the code opens it.',
+    instr_random: '🎲 <strong>Random:</strong> Every game has different digit/key locations.',
+
+    win_title: '🎉 You escaped! 🎉',
+    win_msg: 'The door creaked open and light caressed your face.',
+    enter_name: 'Enter your name for the leaderboard:',
+    name_placeholder: 'Your name...',
+    save_score: '💾 Save score',
+    skip_scores: '🏆 Skip to scores',
+    play_again: '🔄 Play again',
+    won_log: '🎉🎉🎉 You won the game! 🎉🎉🎉',
+    new_game_started: '🎮 New game started! Layout is completely shuffled.',
+    hint_tip: '💡 Tip: Find a book with a clue, and a magnifier to read the scrolls.',
+
+    door_title: '🚪 Exit Door',
+    door_locked: 'The heavy door is firmly locked. A large keyhole awaits.',
+    door_need_key: 'You need a key to exit.',
+    door_log_locked: 'Door is locked. Key missing.',
+
+    key_found_title: '🎉 You found the key!',
+    key_found_extra: 'Now you can open the door!',
+    key_found_log: '🔑 You found the great key!!!',
+    key_item_name: '🔑 The Great Key',
+
+    type_code: 'Enter a 4-digit code:',
+    try_open: '🔓 Try to open',
+    cancel: 'Cancel',
+    close: 'Close',
+    opened: '🎊 {name} opened!',
+    wrong_code: '❌ "{code}" — wrong code.',
+    empty_location: '{name} is already empty.',
+
+    digit_found: '✨ {verb}: "{digit}"!',
+    nothing_special: 'Nothing special here.',
+    already_checked: 'You already checked here.',
+    need_preparation: 'Something blocks you... maybe prepare something first.',
+
+    item_bed: 'Bed',
+    item_cabinet: 'Wooden Cabinet',
+    item_curtains: 'Curtains',
+    item_books: 'Bookshelf',
+    item_painting: 'Oil Painting',
+    item_small_pic: 'Small Picture',
+    item_desk: 'Writing Desk',
+    item_chair: 'Chair',
+    item_scrolls: 'Ancient Scrolls',
+    item_mirror: 'Giant Mirror',
+    item_vase: 'Porcelain Vase',
+    item_mask: 'Mask',
+    item_rug: 'Persian Rug',
+    item_sofa: 'Sofa',
+    item_clock: 'Grandfather Clock',
+    item_chandelier: 'Crystal Chandelier',
+    item_floor: 'Floor Tiles',
+    item_door: 'Door (Exit)',
+
+    hide_rug: 'under the rug',
+    hide_vase: 'inside the vase',
+    hide_desk: 'inside the candle',
+    hide_mirror: 'behind the mirror',
+    hide_bed: 'under the bed',
+    hide_painting: 'behind the oil painting',
+    hide_small_pic: 'behind the small picture',
+    hide_floor: 'under a loose tile',
+    hide_chair: 'under the chair',
+    hide_mask: 'behind the mask',
+
+    verb_rug: 'You lifted the rug and found a note',
+    verb_vase: 'You flipped the vase and a note fell out',
+    verb_desk: 'Inside the extinguished candle wax, you found a note',
+    verb_mirror: 'You looked behind the mirror and found a note',
+    verb_bed: 'You crawled under the bed and found a note',
+    verb_painting: 'You moved the painting and found a note',
+    verb_small_pic: 'Behind the small picture, you found a note',
+    verb_floor: 'You lifted a loose tile and found a note',
+    verb_chair: 'You flipped the chair and found a note',
+    verb_mask: 'You removed the mask and found a note',
+
+    clock_name: 'Grandfather Clock', clock_emoji: '⏰',
+    clock_desc: 'A giant clock with 4 digit dials on its door.',
+    clock_hidden: 'Inside the grandfather clock, behind the pendulum, rests a large bronze key.',
+    cabinet_name: 'Wooden Cabinet', cabinet_emoji: '🗄️',
+    cabinet_desc: 'An antique cabinet with a 4-digit combination lock.',
+    cabinet_hidden: 'Inside the cabinet, among old clothes, you found a large bronze key.',
+
+    curtains_title: '🪟 Velvet Curtains',
+    curtains_desc: 'You pulled the curtains — the window is blocked by bricks.',
+    curtains_desc2: 'No way out through the window.',
+    curtains_log: 'Window blocked by bricks.',
+
+    books_title: '📚 Bookshelf',
+    books_prompt: '15 dusty books. Which one will you read?',
+    book_hint_log: '📖 Book {n}: important clue!',
+    book_hint_title: '📖 Book {n}',
+    book_hint_text: '"Those who seek will find.<br>Four digits are hidden in this room,<br>each in a different place.<br>Search every corner — even the most unexpected.<br>Those who read the scrolls will know their order."',
+    book_hint_tip: 'Tip: Find a magnifier to read the scrolls.',
+    book_boring: 'Book {n}: old boring story. Not relevant.',
+
+    desk_title: '🕯️ Writing Desk',
+    desk_lit: 'A candle burns with a small flame.',
+    desk_extra: 'The desk is empty apart from the candle.',
+    desk_blow: '🌬️ Blow out candle',
+    desk_blow_log: '🌬️ You blew out the candle. Smoke rises...',
+    desk_drawer: 'Check drawer',
+    desk_drawer_empty: 'The drawer is empty.',
+    desk_out: 'The candle is out and smoke rises.',
+    desk_check: 'Inspect the extinguished candle',
+
+    sofa_title: '🛋️ Sofa',
+    sofa_desc: 'A comfortable upholstered sofa.',
+    sofa_check: 'Check between cushions',
+    sofa_magnifier: 'You found a magnifying glass between the cushions!',
+    sofa_already: 'Already checked the cushions.',
+    magnifier_item: '🔎 Magnifying glass',
+
+    scrolls_title_read: '📜 Scrolls (via magnifier)',
+    scrolls_order: '"The digit order is determined by location:<br>{order}"',
+    scrolls_location: 'The code opens: <strong>{name}</strong>',
+    scrolls_log: '📜 You uncovered the order and the key\'s location!',
+    scrolls_title: '📜 Ancient Scrolls',
+    scrolls_cant_read: 'The letters are too tiny — you cannot read them.',
+    scrolls_need_magnifier: 'Maybe something could magnify the text...',
+    scrolls_small_log: 'Scrolls too small to read.',
+
+    chandelier_title: '💡 Crystal Chandelier',
+    chandelier_desc: 'A giant chandelier above the center of the room.',
+    chandelier_high: 'It is too high — you cannot reach it.',
+    chandelier_distract: 'Maybe it is just a distraction...',
+
+    ord_first: 'First', ord_second: 'Second', ord_third: 'Third', ord_fourth: 'Fourth',
+
+    anonymous: 'Anonymous'
+  }
+};
+
+// ============ הגדרות (שפה + theme) ============
+const SETTINGS_KEY = 'escape_room_settings';
+const GAME_ACTIVE_KEY = 'escape_room_game_active';
+const settings = (function() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    return {
+      language: saved.language || 'he',
+      theme: saved.theme || 'dark',
+      streak: saved.streak || 0,
+      bestStreak: saved.bestStreak || 0,
+      coins: saved.coins || 0,
+      hints: saved.hints || 0,
+      ownedSkins: Array.isArray(saved.ownedSkins) ? saved.ownedSkins : ['default'],
+      activeSkin: saved.activeSkin || 'default',
+      music: saved.music !== undefined ? saved.music : true,
+      sfx: saved.sfx !== undefined ? saved.sfx : true
+    };
+  } catch {
+    return { language: 'he', theme: 'dark', streak: 0, bestStreak: 0, coins: 0,
+             hints: 0, ownedSkins: ['default'], activeSkin: 'default', music: true, sfx: true };
+  }
+})();
+
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
+}
+
+// ============ אודיו ============
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch (e) { return null; }
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(freq, duration, type = 'sine', volume = 0.2, startOffset = 0) {
+  if (!settings.sfx) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = type;
+  osc.frequency.value = freq;
+  const t0 = ctx.currentTime + startOffset;
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(volume, t0 + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+  osc.start(t0);
+  osc.stop(t0 + duration + 0.05);
+}
+
+function sfx(type) {
+  if (!settings.sfx) return;
+  switch (type) {
+    case 'click':
+      playTone(600, 0.04, 'square', 0.08);
+      break;
+    case 'digit':
+      playTone(523, 0.1, 'triangle', 0.18);
+      playTone(784, 0.15, 'triangle', 0.2, 0.08);
+      break;
+    case 'error':
+      playTone(200, 0.15, 'sawtooth', 0.2);
+      playTone(150, 0.25, 'sawtooth', 0.2, 0.1);
+      break;
+    case 'open':
+      playTone(392, 0.15, 'triangle', 0.2);
+      playTone(523, 0.15, 'triangle', 0.2, 0.1);
+      playTone(659, 0.2, 'triangle', 0.2, 0.2);
+      break;
+    case 'key':
+      playTone(1047, 0.15, 'triangle', 0.22);
+      playTone(1319, 0.15, 'triangle', 0.22, 0.1);
+      playTone(1568, 0.3, 'triangle', 0.22, 0.2);
+      break;
+    case 'win':
+      [523, 659, 784, 1047].forEach((f, i) =>
+        playTone(f, 0.2, 'triangle', 0.25, i * 0.12));
+      playTone(1319, 0.5, 'triangle', 0.22, 0.5);
+      break;
+    case 'timeout':
+      playTone(400, 0.2, 'sine', 0.2);
+      playTone(300, 0.2, 'sine', 0.2, 0.2);
+      playTone(200, 0.4, 'sine', 0.2, 0.4);
+      break;
+    case 'pickup':
+      playTone(700, 0.08, 'triangle', 0.15);
+      playTone(900, 0.12, 'triangle', 0.15, 0.05);
+      break;
+    case 'candle':
+      playTone(120, 0.3, 'sawtooth', 0.1);
+      break;
+  }
+}
+
+// ============ מוזיקת רקע ============
+const music = {
+  playing: false,
+  timer: null,
+  nodes: [],
+  progression: [
+    [146.83, 174.61, 220.00], // D minor (D, F, A)
+    [130.81, 164.81, 196.00], // C major (C, E, G)
+    [116.54, 146.83, 174.61], // B♭ major (Bb, D, F)
+    [130.81, 164.81, 196.00]  // C major
+  ],
+  step: 0
+};
+
+function playMusicChord() {
+  if (!music.playing || !settings.music) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const chord = music.progression[music.step % music.progression.length];
+  const duration = 4;
+  chord.forEach(freq => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const t0 = ctx.currentTime;
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(0.04, t0 + 1);
+    gain.gain.linearRampToValueAtTime(0.025, t0 + 2.5);
+    gain.gain.linearRampToValueAtTime(0, t0 + duration);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.1);
+    music.nodes.push(osc);
+  });
+  // Soft percussion every other chord
+  if (music.step % 2 === 0) {
+    const noise = ctx.createOscillator();
+    const ng = ctx.createGain();
+    noise.connect(ng); ng.connect(ctx.destination);
+    noise.type = 'triangle';
+    noise.frequency.value = 80;
+    const t0 = ctx.currentTime;
+    ng.gain.setValueAtTime(0.06, t0);
+    ng.gain.exponentialRampToValueAtTime(0.001, t0 + 0.15);
+    noise.start(t0);
+    noise.stop(t0 + 0.2);
+  }
+  music.step++;
+  music.timer = setTimeout(playMusicChord, duration * 1000 * 0.85);
+}
+
+function startMusic() {
+  if (music.playing || !settings.music) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  music.playing = true;
+  music.step = 0;
+  playMusicChord();
+}
+
+function stopMusic() {
+  music.playing = false;
+  if (music.timer) { clearTimeout(music.timer); music.timer = null; }
+  music.nodes.forEach(n => { try { n.stop(); } catch {} });
+  music.nodes = [];
+}
+
+function toggleMusic(val) {
+  settings.music = val;
+  saveSettings();
+  if (val) { startMusic(); } else { stopMusic(); }
+  updateAudioButtons();
+}
+
+function toggleSfx(val) {
+  settings.sfx = val;
+  saveSettings();
+  if (val) { sfx('click'); }
+  updateAudioButtons();
+}
+
+function updateAudioButtons() {
+  document.querySelectorAll('[data-music]').forEach(btn => {
+    btn.classList.toggle('active', (btn.dataset.music === 'on') === settings.music);
+  });
+  document.querySelectorAll('[data-sfx]').forEach(btn => {
+    btn.classList.toggle('active', (btn.dataset.sfx === 'on') === settings.sfx);
+  });
+}
+
+// ============ רצף (Streak) ============
+function updateStreakDisplay() {
+  document.querySelectorAll('[data-streak]').forEach(el => { el.textContent = settings.streak; });
+  document.querySelectorAll('[data-best-streak]').forEach(el => { el.textContent = settings.bestStreak; });
+}
+function incrementStreak() {
+  settings.streak = (settings.streak || 0) + 1;
+  let isNewBest = false;
+  if (settings.streak > (settings.bestStreak || 0)) {
+    settings.bestStreak = settings.streak;
+    isNewBest = true;
+  }
+  saveSettings();
+  updateStreakDisplay();
+  return { streak: settings.streak, isNewBest };
+}
+function resetStreak() {
+  const previousStreak = settings.streak;
+  settings.streak = 0;
+  saveSettings();
+  updateStreakDisplay();
+  return previousStreak;
+}
+
+// ============ מטבעות ============
+const REVIVE_COST = 15;
+const FAST_WIN_REWARD = 3;
+
+function updateCoinsDisplay() {
+  document.querySelectorAll('[data-coins]').forEach(el => { el.textContent = settings.coins; });
+}
+function addCoins(n) {
+  settings.coins = (settings.coins || 0) + n;
+  saveSettings();
+  updateCoinsDisplay();
+}
+function spendCoins(n) {
+  if ((settings.coins || 0) < n) return false;
+  settings.coins -= n;
+  saveSettings();
+  updateCoinsDisplay();
+  return true;
+}
+function reviveStreak(amount) {
+  settings.streak = amount;
+  if (settings.streak > (settings.bestStreak || 0)) {
+    settings.bestStreak = settings.streak;
+  }
+  saveSettings();
+  updateStreakDisplay();
+}
+
+// ============ סקינים ============
+const SKINS = [
+  { id: 'default', price: 0,  preview: 'linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)' },
+  { id: 'forest',  price: 6,  preview: 'linear-gradient(135deg, #0f3a0f, #1d5a2d, #2a7a3a)' },
+  { id: 'cherry',  price: 8,  preview: 'linear-gradient(135deg, #ffb7c5, #ff89a8, #ffd1dc)' },
+  { id: 'sunset',  price: 10, preview: 'linear-gradient(135deg, #ff6b6b, #feca57, #ff9ff3)' },
+  { id: 'ocean',   price: 12, preview: 'linear-gradient(135deg, #006994, #0099cc, #00c9db)' },
+  { id: 'galaxy',  price: 15, preview: 'radial-gradient(ellipse at top, #1a0a4e, #0a0a2e 60%)' },
+  { id: 'neon',    price: 20, preview: 'linear-gradient(135deg, #ff00aa, #00ffff, #aa00ff)' }
+];
+
+function applySkin() {
+  document.documentElement.setAttribute('data-skin', settings.activeSkin || 'default');
+}
+
+function buySkin(skinId) {
+  const skin = SKINS.find(s => s.id === skinId);
+  if (!skin) return;
+  if (settings.ownedSkins.includes(skinId)) return;
+  if ((settings.coins || 0) < skin.price) {
+    fredSays('fred_poor');
+    return;
+  }
+  if (!spendCoins(skin.price)) return;
+  settings.ownedSkins.push(skinId);
+  saveSettings();
+  sfx('pickup');
+  fredSays('fred_bought_skin');
+  log(t('skin_bought_log', { name: t('skin_' + skinId) }), 'success');
+  renderShopContent();
+}
+
+function equipSkin(skinId) {
+  if (!settings.ownedSkins.includes(skinId)) return;
+  settings.activeSkin = skinId;
+  saveSettings();
+  applySkin();
+  sfx('click');
+  fredSays('fred_equipped');
+  log(t('skin_equipped_log', { name: t('skin_' + skinId) }), 'important');
+  renderShopContent();
+}
+
+// ============ רמזים ============
+const HINT_COST = 5;
+
+function buyHints(count, totalCost) {
+  if ((settings.coins || 0) < totalCost) {
+    fredSays('fred_poor');
+    return;
+  }
+  if (!spendCoins(totalCost)) return;
+  settings.hints = (settings.hints || 0) + count;
+  saveSettings();
+  sfx('pickup');
+  fredSays('fred_bought_hint');
+  log(t('hint_bought_log', { n: count, total: settings.hints }), 'success');
+  renderShopContent();
+  updateHintButton();
+}
+
+function useHint() {
+  if (!settings.hints || settings.hints === 0) {
+    showModal('<h2>' + t('hint_no_hints_modal_title') + '</h2>'
+      + '<p>' + t('hint_no_hints_modal_msg') + '</p>', [
+      { text: t('go_to_shop'), action: function() { closeModal(); showShop(); } },
+      { text: t('close'),      action: closeModal }
+    ]);
+    return;
+  }
+  // מצא ספרה שלא נתגלתה
+  const unfound = state.digitSpots.filter(s => !s.found);
+  if (unfound.length === 0) {
+    showModal('<h2>' + t('hint_reveal_title') + '</h2>'
+      + '<p>' + t('hint_all_found_msg') + '</p>');
+    return;
+  }
+  // השקעה — הורד רמז
+  settings.hints--;
+  saveSettings();
+  updateHintButton();
+  const spot = unfound[Math.floor(Math.random() * unfound.length)];
+  spot.found = true;
+  state.code[spot.position] = spot.digit;
+  sfx('digit');
+  updateUI();
+  const locationName = t(spot.nameKey);
+  showModal('<h2>' + t('hint_reveal_title') + '</h2>'
+    + '<p style="font-size:1.2em">' + t('hint_reveal_msg', { digit: spot.digit, location: locationName }) + '</p>');
+  log(t('hint_reveal_log', { digit: spot.digit, location: locationName }), 'important');
+}
+
+function updateHintButton() {
+  const btn = document.getElementById('hint-btn');
+  if (!btn) return;
+  btn.textContent = t('hint_use_btn') + ' (' + (settings.hints || 0) + ')';
+}
+
+function t(key, params) {
+  let s = (TRANSLATIONS[settings.language] && TRANSLATIONS[settings.language][key])
+    || (TRANSLATIONS.he[key]) || key;
+  if (params) {
+    for (const k in params) {
+      s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k]);
+    }
+  }
+  return s;
+}
+
+function applyLanguage() {
+  document.documentElement.lang = settings.language;
+  document.documentElement.dir = settings.language === 'he' ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.innerHTML = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-lang]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === settings.language);
+  });
+  if (document.getElementById('game').style.display !== 'none' && state.keyLocation) {
+    render();
+    updateUI();
+  }
+  const scoresEl = document.getElementById('scores-screen');
+  if (scoresEl && scoresEl.style.display !== 'none') renderScoresContent();
+  const shopEl = document.getElementById('shop-screen');
+  if (shopEl && shopEl.style.display !== 'none') renderShopContent();
+  updateHintButton();
+}
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', settings.theme);
+  document.querySelectorAll('[data-theme-btn]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.themeBtn === settings.theme);
+  });
+}
+
+function setLanguage(lang) {
+  settings.language = lang;
+  saveSettings();
+  applyLanguage();
+}
+
+function setTheme(theme) {
+  settings.theme = theme;
+  saveSettings();
+  applyTheme();
+}
+
+// ============ תצורת משחק ============
+const ROOM_ITEMS = [
+  { id: 'bed',        emoji: '🛏️' },
+  { id: 'cabinet',    emoji: '🗄️' },
+  { id: 'curtains',   emoji: '🪟' },
+  { id: 'books',      emoji: '📚' },
+  { id: 'painting',   emoji: '🖼️' },
+  { id: 'small_pic',  emoji: '🎨' },
+  { id: 'desk',       emoji: '🕯️' },
+  { id: 'chair',      emoji: '🪑' },
+  { id: 'scrolls',    emoji: '📜' },
+  { id: 'mirror',     emoji: '🪞' },
+  { id: 'vase',       emoji: '🏺' },
+  { id: 'mask',       emoji: '🎭' },
+  { id: 'rug',        emoji: '🟦' },
+  { id: 'sofa',       emoji: '🛋️' },
+  { id: 'clock',      emoji: '⏰' },
+  { id: 'chandelier', emoji: '💡' },
+  { id: 'floor',      emoji: '🔲' },
+  { id: 'door',       emoji: '🚪' }
+];
+
+const DIGIT_HIDEOUTS = [
+  { id: 'rug',       nameKey: 'hide_rug',       verbKey: 'verb_rug' },
+  { id: 'vase',      nameKey: 'hide_vase',      verbKey: 'verb_vase' },
+  { id: 'desk',      nameKey: 'hide_desk',      verbKey: 'verb_desk', needs: 'candleOut' },
+  { id: 'mirror',    nameKey: 'hide_mirror',    verbKey: 'verb_mirror' },
+  { id: 'bed',       nameKey: 'hide_bed',       verbKey: 'verb_bed' },
+  { id: 'painting',  nameKey: 'hide_painting',  verbKey: 'verb_painting' },
+  { id: 'small_pic', nameKey: 'hide_small_pic', verbKey: 'verb_small_pic' },
+  { id: 'floor',     nameKey: 'hide_floor',     verbKey: 'verb_floor' },
+  { id: 'chair',     nameKey: 'hide_chair',     verbKey: 'verb_chair' },
+  { id: 'mask',      nameKey: 'hide_mask',      verbKey: 'verb_mask' }
+];
+
+const KEY_HIDEOUTS = [
+  { id: 'clock' },
+  { id: 'cabinet' }
+];
+
+// ============ מצב משחק ============
+const TIME_LIMIT_SECONDS = 120; // 2 דקות — בסופן הרצף נאבד, אך המשחק ממשיך
+const state = {
+  inventory: [], digitSpots: [], correctCode: [],
+  keyLocation: null, hintBook: 1, code: [null, null, null, null],
+  flags: { candleOut: false, foundMagnifier: false, scrollsRead: false,
+           keyHolderOpen: false, hasKey: false, won: false, streakLostTriggered: false },
+  moves: 0, startTime: Date.now()
+};
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function setupGame() {
+  state.keyLocation = shuffle(KEY_HIDEOUTS)[0];
+  const pool = DIGIT_HIDEOUTS.filter(h => h.id !== state.keyLocation.id);
+  const chosen = shuffle(pool).slice(0, 4);
+  const digits = Array.from({ length: 4 }, () => randInt(1, 9));
+  state.correctCode = digits;
+  state.digitSpots = chosen.map((h, i) => ({ ...h, position: i, digit: digits[i], found: false }));
+  state.hintBook = randInt(1, 15);
+}
+
+// ============ UI ============
+function log(msg, cls = '') {
+  const logEl = document.getElementById('log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry ' + cls;
+  entry.textContent = '▸ ' + msg;
+  logEl.insertBefore(entry, logEl.firstChild);
+  while (logEl.children.length > 20) logEl.removeChild(logEl.lastChild);
+}
+
+function updateUI() {
+  document.getElementById('moves').textContent = state.moves;
+  const invEl = document.getElementById('inv-items');
+  invEl.innerHTML = state.inventory.length === 0
+    ? t('inv_empty')
+    : state.inventory.map(i => `<span class="inv-item">${i}</span>`).join('');
+  document.getElementById('code-display').textContent =
+    state.code.map(d => d === null ? '?' : d).join('');
+}
+
+function hasItem(name) { return state.inventory.includes(name); }
+function addItem(name) {
+  if (!hasItem(name)) {
+    state.inventory.push(name);
+    sfx('pickup');
+    log(t('added_to_inv', { item: name }), 'important');
+    updateUI();
+  }
+}
+
+function showModal(html, buttons) {
+  const mc = document.getElementById('modal-content');
+  const btns = buttons || [{ text: t('close'), action: closeModal }];
+  let btnHtml = btns.map((b, i) => `<button onclick="window._modalAction(${i})">${b.text}</button>`).join('');
+  mc.innerHTML = html + '<div style="margin-top:20px">' + btnHtml + '</div>';
+  window._modalButtons = btns;
+  window._modalAction = (i) => btns[i].action();
+  document.getElementById('modal').classList.add('active');
+}
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+
+// ============ ספרות ============
+function tryDigit(itemId) {
+  const spot = state.digitSpots.find(s => s.id === itemId);
+  if (!spot) { log(t('nothing_special')); return; }
+  if (spot.found) { log(t('already_checked')); return; }
+  if (spot.needs && !state.flags[spot.needs]) { log(t('need_preparation')); return; }
+  spot.found = true;
+  state.code[spot.position] = spot.digit;
+  sfx('digit');
+  log(t('digit_found', { verb: t(spot.verbKey), digit: spot.digit }), 'success');
+  updateUI();
+}
+
+// ============ מיקום המפתח ============
+function handleKeyLocation() {
+  const loc = state.keyLocation;
+  const locName = t(loc.id + '_name');
+  const locEmoji = t(loc.id + '_emoji');
+  const locDesc = t(loc.id + '_desc');
+  const locHidden = t(loc.id + '_hidden');
+
+  if (state.flags.keyHolderOpen) {
+    if (!state.flags.hasKey) {
+      state.flags.hasKey = true;
+      addItem(t('key_item_name'));
+      sfx('key');
+      showModal('<h2>' + t('key_found_title') + '</h2>'
+        + '<p>' + locHidden + '</p>'
+        + '<p><strong>' + t('key_found_extra') + '</strong></p>');
+      log(t('key_found_log'), 'success');
+    } else {
+      log(t('empty_location', { name: locName }));
+    }
+    return;
+  }
+  showModal('<h2>' + locEmoji + ' ' + locName + '</h2>'
+    + '<p>' + locDesc + '</p>'
+    + '<p>' + t('type_code') + '</p>'
+    + '<p><input type="text" id="code-input" maxlength="4" inputmode="numeric" placeholder="----"></p>', [
+    { text: t('try_open'), action: () => {
+      const input = document.getElementById('code-input').value.trim();
+      if (input === state.correctCode.join('')) {
+        state.flags.keyHolderOpen = true;
+        sfx('open');
+        log(t('opened', { name: locName }), 'success');
+        closeModal();
+        setTimeout(() => handleKeyLocation(), 400);
+      } else {
+        sfx('error');
+        log(t('wrong_code', { code: input }), 'error');
+        closeModal();
+      }
+    }},
+    { text: t('cancel'), action: closeModal }
+  ]);
+  setTimeout(() => document.getElementById('code-input')?.focus(), 100);
+}
+
+// ============ מסך ניצחון ============
+function openWinScreen() {
+  state.flags.won = true;
+  localStorage.removeItem(GAME_ACTIVE_KEY);
+  sfx('win');
+  const totalSec = Math.floor((Date.now() - state.startTime) / 1000);
+  const moves = state.moves;
+  const savedName = localStorage.getItem('escape_room_player_name') || '';
+
+  // הגדל רצף
+  const streakInfo = incrementStreak();
+  const streakMsg = streakInfo.isNewBest
+    ? t('new_best_streak', { streak: streakInfo.streak })
+    : t('streak_increased', { streak: streakInfo.streak });
+
+  // הענק מטבעות על ניצחון מהיר (מתחת ל-2 דקות)
+  let coinsMsg = '';
+  if (totalSec < TIME_LIMIT_SECONDS) {
+    addCoins(FAST_WIN_REWARD);
+    coinsMsg = '<p style="font-size:1.2em;color:#ffd700;margin:10px 0">' + t('coins_earned') + '</p>';
+    log(t('coins_earned'), 'success');
+  }
+
+  const html = '<div class="win-screen">'
+    + '<h2>' + t('win_title') + '</h2>'
+    + '<p style="font-size:1.1em">' + t('win_msg') + '</p>'
+    + '<p><strong>' + t('time_label') + ' ' + formatTime(totalSec) + '</strong> | '
+    + '<strong>' + t('moves_label') + ' ' + moves + '</strong></p>'
+    + '<p style="font-size:1.3em;color:#ffd700;margin:15px 0">' + streakMsg + '</p>'
+    + coinsMsg
+    + '<p style="margin-top:20px">' + t('enter_name') + '</p>'
+    + '<p><input type="text" class="name-input" id="player-name" maxlength="20" placeholder="' + t('name_placeholder') + '"></p>'
+    + '</div>';
+
+  showModal(html, [
+    { text: t('save_score'), action: function() {
+        const inp = document.getElementById('player-name');
+        const name = (inp && inp.value.trim()) || t('anonymous');
+        localStorage.setItem('escape_room_player_name', name);
+        saveWinScore(name, totalSec, moves);
+        closeModal();
+        showScores();
+    }},
+    { text: t('skip_scores'), action: function() { closeModal(); showScores(); } },
+    { text: t('play_again'),  action: function() { closeModal(); startGame(); } }
+  ]);
+
+  setTimeout(function() {
+    const inp = document.getElementById('player-name');
+    if (inp) { inp.value = savedName; inp.focus(); }
+  }, 100);
+
+  log(t('won_log'), 'success');
+}
+
+// ============ מפעיל אירועים ============
+function interact(id) {
+  if (state.flags.won) return;
+  sfx('click');
+  state.moves++;
+  updateUI();
+
+  if (id === 'door') {
+    try {
+      if (state.flags.hasKey) {
+        openWinScreen();
+      } else {
+        showModal('<h2>' + t('door_title') + '</h2>'
+          + '<p>' + t('door_locked') + '</p>'
+          + '<p><em>' + t('door_need_key') + '</em></p>');
+        log(t('door_log_locked'));
+      }
+    } catch (err) {
+      console.error('door error:', err);
+      alert('Error: ' + err.message);
+    }
+    return;
+  }
+
+  if (id === state.keyLocation.id) { handleKeyLocation(); return; }
+
+  const special = specialHandlers[id];
+  if (special) { special(); return; }
+
+  tryDigit(id);
+}
+
+// ============ פריטים מיוחדים ============
+const specialHandlers = {
+  curtains: () => {
+    showModal('<h2>' + t('curtains_title') + '</h2>'
+      + '<p>' + t('curtains_desc') + '</p>'
+      + '<p>' + t('curtains_desc2') + '</p>');
+    log(t('curtains_log'));
+  },
+  books: () => {
+    const books = Array.from({ length: 15 }, (_, i) =>
+      `<div class="book" onclick="window._readBook(${i + 1})">${i + 1}</div>`).join('');
+    showModal('<h2>' + t('books_title') + '</h2>'
+      + '<p>' + t('books_prompt') + '</p>'
+      + '<div class="books-grid">' + books + '</div>');
+    window._readBook = (n) => {
+      closeModal();
+      if (n === state.hintBook) {
+        log(t('book_hint_log', { n }), 'important');
+        showModal('<h2>' + t('book_hint_title', { n }) + '</h2>'
+          + '<p style="font-style:italic">' + t('book_hint_text') + '</p>'
+          + '<p><em>' + t('book_hint_tip') + '</em></p>');
+      } else {
+        log(t('book_boring', { n }));
+      }
+    };
+  },
+  desk: () => {
+    if (!state.flags.candleOut) {
+      showModal('<h2>' + t('desk_title') + '</h2>'
+        + '<p>' + t('desk_lit') + '</p>'
+        + '<p>' + t('desk_extra') + '</p>', [
+        { text: t('desk_blow'), action: () => {
+          state.flags.candleOut = true;
+          sfx('candle');
+          log(t('desk_blow_log'), 'important');
+          closeModal();
+        }},
+        { text: t('desk_drawer'), action: () => { log(t('desk_drawer_empty')); closeModal(); }},
+        { text: t('cancel'), action: closeModal }
+      ]);
+    } else {
+      showModal('<h2>' + t('desk_title') + '</h2><p>' + t('desk_out') + '</p>', [
+        { text: t('desk_check'), action: () => { tryDigit('desk'); closeModal(); }},
+        { text: t('cancel'), action: closeModal }
+      ]);
+    }
+  },
+  sofa: () => {
+    showModal('<h2>' + t('sofa_title') + '</h2><p>' + t('sofa_desc') + '</p>', [
+      { text: t('sofa_check'), action: () => {
+        if (!state.flags.foundMagnifier) {
+          state.flags.foundMagnifier = true;
+          addItem(t('magnifier_item'));
+          log(t('sofa_magnifier'), 'success');
+        } else {
+          log(t('sofa_already'));
+        }
+        closeModal();
+      }},
+      { text: t('cancel'), action: closeModal }
+    ]);
+  },
+  scrolls: () => {
+    if (state.flags.foundMagnifier) {
+      state.flags.scrollsRead = true;
+      const labels = [t('ord_first'), t('ord_second'), t('ord_third'), t('ord_fourth')];
+      const order = state.digitSpots.map((s, i) => `${labels[i]} — ${t(s.nameKey)}`).join('<br>');
+      const locName = t(state.keyLocation.id + '_name');
+      showModal('<h2>' + t('scrolls_title_read') + '</h2>'
+        + '<p style="font-style:italic">' + t('scrolls_order', { order }) + '</p>'
+        + '<p><em>' + t('scrolls_location', { name: locName }) + '</em></p>');
+      log(t('scrolls_log'), 'important');
+    } else {
+      showModal('<h2>' + t('scrolls_title') + '</h2>'
+        + '<p>' + t('scrolls_cant_read') + '</p>'
+        + '<p><em>' + t('scrolls_need_magnifier') + '</em></p>');
+      log(t('scrolls_small_log'));
+    }
+  },
+  chandelier: () => {
+    showModal('<h2>' + t('chandelier_title') + '</h2>'
+      + '<p>' + t('chandelier_desc') + '</p>'
+      + '<p>' + t('chandelier_high') + '</p>'
+      + '<p><em>' + t('chandelier_distract') + '</em></p>');
+  }
+};
+
+// ============ רינדור ============
+function render() {
+  const room = document.getElementById('room');
+  room.innerHTML = ROOM_ITEMS.map(it =>
+    `<div class="item" onclick="interact('${it.id}')">
+      <span class="item-emoji">${it.emoji}</span>
+      <span class="item-name">${t('item_' + it.id)}</span>
+    </div>`
+  ).join('');
+}
+
+function tick() {
+  const s = Math.floor((Date.now() - state.startTime) / 1000);
+  const m = Math.floor(s / 60);
+  const timerEl = document.getElementById('timer');
+  timerEl.textContent = `${String(m).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+
+  const gameVisible = document.getElementById('game').style.display === 'block';
+  if (!gameVisible || state.flags.won) {
+    timerEl.style.color = '';
+    timerEl.style.fontWeight = '';
+    return;
+  }
+
+  // אזהרה ויזואלית ככל שמתקרבים לזמן
+  const remaining = TIME_LIMIT_SECONDS - s;
+  if (state.flags.streakLostTriggered) {
+    timerEl.style.color = 'var(--text-faint)';
+    timerEl.style.fontWeight = '';
+  } else if (remaining <= 15) {
+    timerEl.style.color = 'var(--error)';
+    timerEl.style.fontWeight = 'bold';
+  } else if (remaining <= 30) {
+    timerEl.style.color = '#ff8844';
+    timerEl.style.fontWeight = 'bold';
+  } else {
+    timerEl.style.color = '';
+    timerEl.style.fontWeight = '';
+  }
+
+  // עברו 2 דקות — הרצף נאבד, אבל המשחק ממשיך
+  if (s >= TIME_LIMIT_SECONDS && !state.flags.streakLostTriggered) {
+    handleTimeout();
+  }
+}
+
+function handleTimeout() {
+  if (state.flags.streakLostTriggered || state.flags.won) return;
+  state.flags.streakLostTriggered = true;
+  sfx('timeout');
+  localStorage.removeItem(GAME_ACTIVE_KEY);
+
+  const lostStreak = settings.streak;
+  if (lostStreak > 0) resetStreak();
+
+  // אם לא היה רצף — חלונית רגילה בלי החייאה
+  if (lostStreak === 0) {
+    showModal('<h2>' + t('time_up_title') + '</h2>'
+      + '<p style="font-size:1.1em">' + t('streak_lost_continue_no_streak') + '</p>', [
+      { text: t('continue_playing'), action: closeModal },
+      { text: t('back_to_menu'),     action: function() { closeModal(); backToMenu(); } }
+    ]);
+    log(t('time_up_log'), 'error');
+    return;
+  }
+
+  // חלונית דרמטית עם אפשרות החייאה
+  const canAfford = (settings.coins || 0) >= REVIVE_COST;
+  const html = '<div class="streak-lost-modal">'
+    + '<div class="streak-lost-title">💔 ' + t('streak_lost_big') + '</div>'
+    + '<div class="streak-lost-sub">' + t('streak_lost_big_sub', { streak: lostStreak }) + '</div>'
+    + '<div style="margin:20px 0;font-size:1.1em">'
+    + '<span class="coins-inline">🪙 ' + (settings.coins || 0) + '</span>'
+    + '</div>'
+    + '<button class="revive-btn" id="revive-btn-action"' + (canAfford ? '' : ' disabled') + '>'
+    + t('revive_btn') + ' <span class="cost">' + t('revive_cost', { cost: REVIVE_COST }) + '</span>'
+    + (canAfford ? '' : '<br><small>' + t('not_enough_coins') + '</small>')
+    + '</button>'
+    + '<button class="continue-btn" id="continue-btn-action">' + t('continue_btn') + '</button>'
+    + '</div>';
+
+  const mc = document.getElementById('modal-content');
+  mc.innerHTML = html;
+  document.getElementById('modal').classList.add('active');
+
+  if (canAfford) {
+    document.getElementById('revive-btn-action').onclick = function() {
+      if (spendCoins(REVIVE_COST)) {
+        reviveStreak(lostStreak);
+        sfx('key');
+        log(t('revive_success', { streak: lostStreak }), 'success');
+        closeModal();
+      }
+    };
+  }
+  document.getElementById('continue-btn-action').onclick = function() {
+    closeModal();
+  };
+
+  log(t('time_up_log'), 'error');
+}
+
+// ============ איפוס ============
+function resetGame() {
+  state.inventory = [];
+  state.digitSpots = [];
+  state.correctCode = [];
+  state.keyLocation = null;
+  state.code = [null, null, null, null];
+  state.flags = { candleOut: false, foundMagnifier: false, scrollsRead: false,
+                  keyHolderOpen: false, hasKey: false, won: false, streakLostTriggered: false };
+  state.moves = 0;
+  state.startTime = Date.now();
+  document.getElementById('log').innerHTML = '';
+  closeModal();
+  setupGame();
+  render();
+  updateUI();
+  log(t('new_game_started'), 'important');
+  log(t('hint_tip'));
+}
+
+// ============ ניווט ============
+function startGame() {
+  // אתחול אודיו (חייב להתחיל אחרי פעולת משתמש)
+  getAudioCtx();
+  if (settings.music) startMusic();
+
+  // אם היה משחק שלא הסתיים - הרצף נאבד
+  let lostStreakValue = 0;
+  if (localStorage.getItem(GAME_ACTIVE_KEY) === '1' && settings.streak > 0) {
+    lostStreakValue = settings.streak;
+    resetStreak();
+  }
+  localStorage.setItem(GAME_ACTIVE_KEY, '1');
+
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('scores-screen').style.display = 'none';
+  document.getElementById('settings-screen').style.display = 'none';
+  document.getElementById('shop-screen').style.display = 'none';
+  document.getElementById('game').style.display = 'block';
+  resetGame();
+  updateHintButton();
+
+  if (lostStreakValue > 0) {
+    log(t('streak_lost', { streak: lostStreakValue }), 'error');
+  }
+}
+
+function backToMenu() {
+  closeModal();
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('scores-screen').style.display = 'none';
+  document.getElementById('settings-screen').style.display = 'none';
+  document.getElementById('shop-screen').style.display = 'none';
+  document.getElementById('menu').style.display = 'block';
+  updateStreakDisplay();
+  updateCoinsDisplay();
+}
+
+function giveUp() {
+  if (state.flags.won) { backToMenu(); return; }
+  if (settings.streak === 0) {
+    // אין מה לאבד — חזרה ישירה
+    localStorage.removeItem(GAME_ACTIVE_KEY);
+    backToMenu();
+    return;
+  }
+  showModal('<h2>' + t('give_up_confirm_title') + '</h2>'
+    + '<p>' + t('give_up_confirm_msg', { streak: settings.streak }) + '</p>', [
+    { text: t('give_up_yes'), action: function() {
+        resetStreak();
+        localStorage.removeItem(GAME_ACTIVE_KEY);
+        log(t('give_up_log'), 'error');
+        closeModal();
+        backToMenu();
+    }},
+    { text: t('give_up_no'), action: closeModal }
+  ]);
+}
+
+function showInstructions() {
+  showModal('<h2>' + t('instr_title') + '</h2>'
+    + '<div style="text-align:start;line-height:1.8">'
+    + '<p>' + t('instr_goal') + '</p>'
+    + '<p>' + t('instr_code') + '</p>'
+    + '<p>' + t('instr_scrolls') + '</p>'
+    + '<p>' + t('instr_books') + '</p>'
+    + '<p>' + t('instr_key') + '</p>'
+    + '<p>' + t('instr_random') + '</p>'
+    + '<p>' + t('time_limit_instr') + '</p>'
+    + '</div>');
+}
+
+function showSettings() {
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('scores-screen').style.display = 'none';
+  document.getElementById('shop-screen').style.display = 'none';
+  document.getElementById('settings-screen').style.display = 'block';
+  applyLanguage();
+  applyTheme();
+  updateAudioButtons();
+}
+
+// ============ חנות ============
+let currentShopTab = 'skins';
+
+function fredSays(key) {
+  const el = document.getElementById('fred-speech');
+  if (!el) return;
+  el.textContent = t(key);
+}
+
+function fredMeow() {
+  sfx('pickup');
+  const messages = ['fred_welcome', 'fred_skins', 'fred_hints', 'fred_welcome_menu'];
+  fredSays(messages[Math.floor(Math.random() * messages.length)]);
+}
+
+function showShop() {
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('scores-screen').style.display = 'none';
+  document.getElementById('settings-screen').style.display = 'none';
+  document.getElementById('shop-screen').style.display = 'block';
+  currentShopTab = 'skins';
+  document.querySelectorAll('#shop-screen .tab').forEach((el, i) =>
+    el.classList.toggle('active', i === 0));
+  fredSays('fred_welcome');
+  renderShopContent();
+}
+
+function switchShopTab(tab) {
+  currentShopTab = tab;
+  document.querySelectorAll('#shop-screen .tab').forEach(el => el.classList.remove('active'));
+  document.querySelector(`#shop-screen .tab[onclick*="${tab}"]`).classList.add('active');
+  fredSays(tab === 'skins' ? 'fred_skins' : 'fred_hints');
+  renderShopContent();
+}
+
+function renderShopContent() {
+  const content = document.getElementById('shop-content');
+  if (!content) return;
+  if (currentShopTab === 'skins') {
+    content.innerHTML = '<div class="shop-grid">' + SKINS.map(s => {
+      const owned = settings.ownedSkins.includes(s.id);
+      const equipped = settings.activeSkin === s.id;
+      const canAfford = (settings.coins || 0) >= s.price;
+      let btnHtml;
+      if (equipped) {
+        btnHtml = `<button class="shop-btn equipped">${t('shop_equipped')}</button>`;
+      } else if (owned) {
+        btnHtml = `<button class="shop-btn equip" onclick="equipSkin('${s.id}')">${t('shop_equip')}</button>`;
+      } else if (canAfford) {
+        btnHtml = `<button class="shop-btn buy" onclick="buySkin('${s.id}')">${t('shop_buy')} 🪙${s.price}</button>`;
+      } else {
+        btnHtml = `<button class="shop-btn disabled" disabled>🪙${s.price}</button>`;
+      }
+      return `<div class="shop-item${equipped ? ' equipped' : ''}">
+        <div class="preview" style="background:${s.preview}"></div>
+        <div class="name">${t('skin_' + s.id)}</div>
+        <div class="price">${s.price === 0 ? '✨' : '🪙 ' + s.price}</div>
+        ${btnHtml}
+      </div>`;
+    }).join('') + '</div>';
+  } else {
+    // Hints tab
+    const packages = [
+      { count: 1,  cost: 5,  key: 'hint_bundle_one' },
+      { count: 3,  cost: 13, key: 'hint_bundle_three' },
+      { count: 10, cost: 40, key: 'hint_bundle_five' }
+    ];
+    content.innerHTML =
+      `<p style="text-align:center;margin-bottom:15px">${t('hint_shop_desc')}</p>`
+      + `<p style="text-align:center;font-size:1.2em;margin-bottom:20px">`
+      + `${t('hint_you_have')} <strong style="color:#ffd700">💡 ${settings.hints || 0}</strong></p>`
+      + packages.map(p => {
+        const canAfford = (settings.coins || 0) >= p.cost;
+        return `<div class="hint-package">
+          <span class="label">💡 ${p.count} ${p.count === 1 ? 'רמז' : 'רמזים'}</span>
+          <span class="package-price">🪙 ${p.cost}</span>
+          <button class="hint-action-btn" ${canAfford ? '' : 'disabled'} onclick="buyHints(${p.count}, ${p.cost})">${t('shop_buy')}</button>
+        </div>`;
+      }).join('');
+  }
+}
+
+// ============ שיאים ============
+const PERSONAL_KEY = 'escape_room_personal_scores';
+const GLOBAL_KEY = 'escape_room_global_scores';
+
+function loadScores(key) {
+  try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
+}
+function saveScores(key, scores) {
+  try { localStorage.setItem(key, JSON.stringify(scores)); } catch {}
+}
+
+(function cleanupOldDemoScores() {
+  const marker = 'escape_room_demo_cleaned';
+  if (localStorage.getItem(marker)) return;
+  const DEMO_NAMES = ['נועה 👑', 'דניאל', 'שרה', 'יוסי', 'מיכל', 'אבי', 'תמר'];
+  const scores = loadScores(GLOBAL_KEY).filter(s => !DEMO_NAMES.includes(s.name));
+  saveScores(GLOBAL_KEY, scores);
+  localStorage.setItem(marker, '1');
+})();
+
+// Backend (נפרס ביחד עם ה-HTML) — אם זמין, משתמשים בו. אחרת נופלים ל-localStorage.
+const API_BASE = (window.location.protocol === 'file:' ? null : '/api');
+
+async function loadGlobalScores() {
+  if (!API_BASE) return loadScores(GLOBAL_KEY);
+  try {
+    const res = await fetch(API_BASE + '/scores', { cache: 'no-cache' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    saveScores(GLOBAL_KEY, data); // cache מקומי
+    return data;
+  } catch (err) {
+    console.warn('Global scores API unavailable, using local cache:', err.message);
+    return loadScores(GLOBAL_KEY);
+  }
+}
+
+async function submitGlobalScore(score) {
+  if (!API_BASE) {
+    const scores = loadScores(GLOBAL_KEY);
+    scores.push(score);
+    saveScores(GLOBAL_KEY, scores);
+    return;
+  }
+  try {
+    const res = await fetch(API_BASE + '/scores', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(score)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+  } catch (err) {
+    console.warn('Could not submit score to API, cached locally:', err.message);
+    const scores = loadScores(GLOBAL_KEY);
+    scores.push(score);
+    saveScores(GLOBAL_KEY, scores);
+  }
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function renderScoresTable(scores, emptyMsg) {
+  if (!scores || scores.length === 0) {
+    return `<div class="empty-scores">${emptyMsg}</div>`;
+  }
+  const sorted = [...scores].sort((a, b) => a.time - b.time).slice(0, 10);
+  const rows = sorted.map((s, i) => {
+    const rankClass = i < 3 ? `rank-${i+1}` : '';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1);
+    return `<tr>
+      <td class="rank ${rankClass}">${medal}</td>
+      <td>${s.name}</td>
+      <td>⏱️ ${formatTime(s.time)}</td>
+      <td>🔍 ${s.moves}</td>
+      <td style="color:var(--text-faint);font-size:0.85em">${s.date}</td>
+    </tr>`;
+  }).join('');
+  return `<table class="scores-table">
+    <thead><tr>
+      <th>${t('col_rank')}</th><th>${t('col_name')}</th><th>${t('col_time')}</th><th>${t('col_moves')}</th><th>${t('col_date')}</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+let currentTab = 'personal';
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
+  renderScoresContent();
+}
+
+async function renderScoresContent() {
+  const content = document.getElementById('scores-content');
+  if (!content) return;
+  if (currentTab === 'personal') {
+    const scores = loadScores(PERSONAL_KEY);
+    content.innerHTML = renderScoresTable(scores, t('empty_personal'))
+      + `<div class="scores-note">${t('personal_note')}</div>`;
+  } else {
+    content.innerHTML = '<div class="empty-scores">⏳ טוען...</div>';
+    const scores = await loadGlobalScores();
+    content.innerHTML = renderScoresTable(scores, t('empty_global'))
+      + `<div class="scores-note">${t('global_note')}</div>`;
+  }
+}
+
+function showScores() {
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('settings-screen').style.display = 'none';
+  document.getElementById('scores-screen').style.display = 'block';
+  currentTab = 'personal';
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', i === 0);
+  });
+  renderScoresContent();
+}
+
+function saveWinScore(playerName, timeSeconds, moves) {
+  const today = new Date().toISOString().slice(0, 10);
+  const score = { name: playerName || t('anonymous'), time: timeSeconds, moves, date: today };
+  const personal = loadScores(PERSONAL_KEY);
+  personal.push(score);
+  saveScores(PERSONAL_KEY, personal);
+  submitGlobalScore(score); // fire-and-forget, async
+}
+
+// ============ אתחול ============
+applyLanguage();
+applyTheme();
+applySkin();
+updateStreakDisplay();
+updateCoinsDisplay();
+updateAudioButtons();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
