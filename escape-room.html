@@ -396,6 +396,45 @@
   }
   .hint-action-btn:hover { background: var(--accent-hover); }
   .hint-action-btn:disabled { background: #555; color: #999; cursor: not-allowed; }
+
+  /* Auth / משתמשים */
+  .user-panel {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg-inventory); padding: 12px 18px;
+    border-radius: 12px; margin-bottom: 20px;
+    border: 1px solid var(--accent);
+  }
+  .user-panel .username {
+    font-weight: bold; color: var(--accent); font-size: 1.1em;
+  }
+  .user-panel .user-action {
+    background: transparent; border: 1px solid var(--border-color);
+    color: var(--text-dim); padding: 6px 12px; font-size: 0.85em;
+    cursor: pointer; border-radius: 8px;
+  }
+  .user-panel .user-action:hover { color: var(--accent); border-color: var(--accent); }
+
+  .auth-input {
+    display: block; width: 100%; max-width: 300px;
+    padding: 12px 16px; margin: 10px auto;
+    font-size: 1em;
+    background: var(--bg-input); color: var(--text-primary);
+    border: 2px solid var(--border-item); border-radius: 10px;
+    letter-spacing: normal; text-align: start;
+  }
+  .auth-input:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .auth-err {
+    color: var(--error); font-weight: bold; margin: 10px 0;
+    min-height: 1.2em; font-size: 0.95em;
+  }
+  .auth-switch-link {
+    background: transparent; border: none; color: var(--accent);
+    cursor: pointer; text-decoration: underline; padding: 5px;
+    font-size: 0.9em;
+  }
+  .auth-switch-link:hover { color: var(--accent-hover); }
   .menu-btn {
     display: block; width: 280px; margin: 12px auto;
     padding: 18px 25px; font-size: 1.2em;
@@ -506,6 +545,16 @@
 <div id="menu">
   <h1 data-i18n="title"></h1>
   <div class="tagline" data-i18n="tagline"></div>
+
+  <div id="user-panel" class="user-panel" style="display:none">
+    <span class="username" id="user-welcome"></span>
+    <button class="user-action" onclick="doLogout()" data-i18n="auth_logout"></button>
+  </div>
+  <div id="guest-panel" class="user-panel" style="display:none">
+    <span style="color:var(--text-dim);font-size:0.95em" data-i18n="auth_need_login"></span>
+    <button class="user-action" onclick="showAuthModal('login')" data-i18n="auth_login"></button>
+  </div>
+
   <div class="streak-panel">
     <div class="streak-item">
       <span data-i18n="streak_label"></span>
@@ -711,6 +760,31 @@ const TRANSLATIONS = {
     fred_equipped: 'וואו! זה נראה פצצה! 💫',
     fred_poor: 'אין לך מספיק מטבעות... חזור כשתנצח עוד! 😸',
     fred_welcome_menu: 'מיאו! מוכן להרפתקה? 🐾',
+    auth_login: '🔐 התחברות',
+    auth_register: '📝 הרשמה',
+    auth_logout: '🚪 התנתקות',
+    auth_username: 'שם משתמש',
+    auth_password: 'סיסמה',
+    auth_submit_login: 'התחבר',
+    auth_submit_register: 'הירשם',
+    auth_guest_hint: 'שחק כאורח (נתונים נשמרים רק בדפדפן הזה)',
+    auth_welcome_back: 'שלום, {name}! 👋',
+    auth_need_login: 'חובה להתחבר כדי שהנתונים ישמרו על השרת',
+    auth_or_play_guest: 'או המשך כאורח',
+    auth_switch_to_login: 'יש לי חשבון',
+    auth_switch_to_register: 'אין לי חשבון',
+    auth_title_login: '🔐 התחברות',
+    auth_title_register: '📝 יצירת חשבון חדש',
+    auth_username_placeholder: '3-20 תווים',
+    auth_password_placeholder: '4 תווים לפחות',
+    auth_err_short_username: 'שם המשתמש חייב להיות 3-20 תווים',
+    auth_err_short_password: 'הסיסמה חייבת להיות 4 תווים לפחות',
+    auth_err_taken: 'שם המשתמש כבר תפוס',
+    auth_err_invalid: 'שם משתמש או סיסמה שגויים',
+    auth_err_network: 'אין חיבור לשרת',
+    auth_success_register: '🎉 ברוך הבא, {name}!',
+    auth_success_login: '👋 ברוך שובך, {name}!',
+    auth_logout_confirm: 'בטוח שאתה רוצה להתנתק?',
     streak_lost_big: 'איבדת את הרצף!',
     streak_lost_big_sub: 'הרצף שלך ({streak}) נעלם...',
     revive_btn: '🫀 החייאה',
@@ -967,6 +1041,31 @@ const TRANSLATIONS = {
     fred_equipped: 'Wow! Looks amazing! 💫',
     fred_poor: 'Not enough coins... come back after more wins! 😸',
     fred_welcome_menu: 'Meow! Ready for an adventure? 🐾',
+    auth_login: '🔐 Log in',
+    auth_register: '📝 Sign up',
+    auth_logout: '🚪 Log out',
+    auth_username: 'Username',
+    auth_password: 'Password',
+    auth_submit_login: 'Log in',
+    auth_submit_register: 'Sign up',
+    auth_guest_hint: 'Play as guest (data stored only in this browser)',
+    auth_welcome_back: 'Hi, {name}! 👋',
+    auth_need_login: 'You must log in for data to be saved on the server',
+    auth_or_play_guest: 'Or continue as guest',
+    auth_switch_to_login: 'I have an account',
+    auth_switch_to_register: 'Create a new account',
+    auth_title_login: '🔐 Log in',
+    auth_title_register: '📝 Create new account',
+    auth_username_placeholder: '3-20 characters',
+    auth_password_placeholder: 'min 4 characters',
+    auth_err_short_username: 'Username must be 3-20 characters',
+    auth_err_short_password: 'Password must be at least 4 characters',
+    auth_err_taken: 'Username already taken',
+    auth_err_invalid: 'Invalid username or password',
+    auth_err_network: 'Cannot reach server',
+    auth_success_register: '🎉 Welcome, {name}!',
+    auth_success_login: '👋 Welcome back, {name}!',
+    auth_logout_confirm: 'Are you sure you want to log out?',
     streak_lost_big: 'You lost your streak!',
     streak_lost_big_sub: 'Your streak ({streak}) is gone...',
     revive_btn: '🫀 Revive',
@@ -1163,6 +1262,174 @@ const settings = (function() {
 
 function saveSettings() {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
+  syncUserData();
+}
+
+// ============ Auth / משתמשים ============
+let currentUser = null;
+
+async function fetchCurrentUser() {
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      currentUser = data.user;
+      applyUserDataToSettings(currentUser);
+    } else {
+      currentUser = null;
+    }
+  } catch {
+    currentUser = null;
+  }
+  updateUserUI();
+}
+
+function applyUserDataToSettings(user) {
+  settings.streak = user.streak;
+  settings.bestStreak = user.bestStreak;
+  settings.coins = user.coins;
+  settings.hints = user.hints;
+  settings.ownedSkins = user.ownedSkins || ['default'];
+  settings.activeSkin = user.activeSkin || 'default';
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
+  updateStreakDisplay();
+  updateCoinsDisplay();
+  updateHintButton();
+  applySkin();
+}
+
+let syncPending = null;
+async function syncUserData() {
+  if (!currentUser) return; // רק משתמשים מחוברים
+  // דחייה קלה — אם יש הרבה שינויים בזה אחר זה, שולחים פעם אחת
+  if (syncPending) clearTimeout(syncPending);
+  syncPending = setTimeout(async () => {
+    try {
+      await fetch('/api/user/data', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          streak: settings.streak,
+          bestStreak: settings.bestStreak,
+          coins: settings.coins,
+          hints: settings.hints,
+          ownedSkins: settings.ownedSkins,
+          activeSkin: settings.activeSkin
+        })
+      });
+    } catch (e) { console.warn('Sync failed:', e.message); }
+  }, 300);
+}
+
+function updateUserUI() {
+  const userPanel = document.getElementById('user-panel');
+  const guestPanel = document.getElementById('guest-panel');
+  if (currentUser) {
+    if (userPanel) {
+      userPanel.style.display = 'flex';
+      document.getElementById('user-welcome').textContent =
+        t('auth_welcome_back', { name: currentUser.username });
+    }
+    if (guestPanel) guestPanel.style.display = 'none';
+  } else {
+    if (userPanel) userPanel.style.display = 'none';
+    if (guestPanel) guestPanel.style.display = 'flex';
+  }
+}
+
+let authMode = 'login'; // 'login' | 'register'
+function showAuthModal(mode) {
+  authMode = mode || 'login';
+  const titleKey = authMode === 'login' ? 'auth_title_login' : 'auth_title_register';
+  const submitKey = authMode === 'login' ? 'auth_submit_login' : 'auth_submit_register';
+  const switchKey = authMode === 'login' ? 'auth_switch_to_register' : 'auth_switch_to_login';
+  const switchTo = authMode === 'login' ? 'register' : 'login';
+
+  const html = '<h2>' + t(titleKey) + '</h2>'
+    + '<input type="text" class="auth-input" id="auth-username" placeholder="' + t('auth_username_placeholder') + '" maxlength="20" autocomplete="username">'
+    + '<input type="password" class="auth-input" id="auth-password" placeholder="' + t('auth_password_placeholder') + '" maxlength="100" autocomplete="' + (authMode === 'login' ? 'current-password' : 'new-password') + '">'
+    + '<div class="auth-err" id="auth-err"></div>'
+    + '<button class="auth-switch-link" onclick="showAuthModal(\'' + switchTo + '\')">' + t(switchKey) + '</button>';
+
+  showModal(html, [
+    { text: t(submitKey), action: submitAuth },
+    { text: t('cancel'),  action: closeModal }
+  ]);
+
+  setTimeout(() => {
+    const u = document.getElementById('auth-username');
+    if (u) u.focus();
+    const p = document.getElementById('auth-password');
+    if (p) p.onkeydown = (e) => { if (e.key === 'Enter') submitAuth(); };
+  }, 100);
+}
+
+async function submitAuth() {
+  const errEl = document.getElementById('auth-err');
+  errEl.textContent = '';
+  const username = (document.getElementById('auth-username').value || '').trim();
+  const password = document.getElementById('auth-password').value || '';
+
+  if (authMode === 'register') {
+    if (username.length < 3 || username.length > 20) return errEl.textContent = t('auth_err_short_username');
+    if (password.length < 4) return errEl.textContent = t('auth_err_short_password');
+  } else {
+    if (!username || !password) return errEl.textContent = t('auth_err_invalid');
+  }
+
+  const endpoint = authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      if (res.status === 409) errEl.textContent = t('auth_err_taken');
+      else if (res.status === 401) errEl.textContent = t('auth_err_invalid');
+      else errEl.textContent = data.error || t('auth_err_invalid');
+      return;
+    }
+    currentUser = data.user;
+    applyUserDataToSettings(currentUser);
+    updateUserUI();
+    sfx('win');
+    closeModal();
+    const msgKey = authMode === 'login' ? 'auth_success_login' : 'auth_success_register';
+    log(t(msgKey, { name: currentUser.username }), 'success');
+  } catch (err) {
+    errEl.textContent = t('auth_err_network');
+  }
+}
+
+async function doLogout() {
+  showModal('<h2>' + t('auth_logout') + '</h2>'
+    + '<p>' + t('auth_logout_confirm') + '</p>', [
+    { text: t('auth_logout'), action: async function() {
+        try {
+          await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+        } catch {}
+        currentUser = null;
+        updateUserUI();
+        closeModal();
+        // אפס תצוגה למשתמש חדש (אבל שמור העדפות UI)
+        try {
+          const uiPrefs = {
+            language: settings.language, theme: settings.theme,
+            music: settings.music, sfx: settings.sfx
+          };
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+            ...uiPrefs, streak: 0, bestStreak: 0, coins: 0, hints: 0,
+            ownedSkins: ['default'], activeSkin: 'default'
+          }));
+        } catch {}
+        location.reload();
+    }},
+    { text: t('cancel'), action: closeModal }
+  ]);
 }
 
 // ============ אודיו ============
@@ -2187,10 +2454,10 @@ const API_BASE = (window.location.protocol === 'file:' ? null : '/api');
 async function loadGlobalScores() {
   if (!API_BASE) return loadScores(GLOBAL_KEY);
   try {
-    const res = await fetch(API_BASE + '/scores', { cache: 'no-cache' });
+    const res = await fetch(API_BASE + '/scores', { cache: 'no-cache', credentials: 'include' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    saveScores(GLOBAL_KEY, data); // cache מקומי
+    saveScores(GLOBAL_KEY, data);
     return data;
   } catch (err) {
     console.warn('Global scores API unavailable, using local cache:', err.message);
@@ -2208,6 +2475,7 @@ async function submitGlobalScore(score) {
   try {
     const res = await fetch(API_BASE + '/scores', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(score)
     });
@@ -2301,6 +2569,8 @@ applySkin();
 updateStreakDisplay();
 updateCoinsDisplay();
 updateAudioButtons();
+updateUserUI();
+fetchCurrentUser(); // async, יעדכן UI כשיסתיים
 setInterval(tick, 1000);
 </script>
 </body>
